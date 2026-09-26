@@ -189,11 +189,26 @@ def build():
     for pdf in sorted(ROOT.glob("*.pdf")):
         shutil.copy2(pdf, OUT / pdf.name)
         href = quote(pdf.name)
-        exam_rows += (f'<li class="lesson-row"><span class="num">📄</span>'
-                      f'<a class="lesson-link" href="{href}" target="_blank"><small>แบบฝึกหัดทบทวนก่อนสอบ · PDF</small>'
+        # interactive version of the same exam: quiz-<pdf stem>-*.html -> docs/exam-<n>/quiz.html
+        quiz = next(iter(ROOT.glob(f"quiz-{pdf.stem}-*.html")), None)
+        qhref = ""
+        if quiz:
+            qdir = OUT / ("exam-" + re.sub(r"\D", "", pdf.stem))
+            qdir.mkdir(exist_ok=True)
+            q = quiz.read_text(encoding="utf-8")
+            bar = QUIZ_BAR.replace('href="index.html"', f'href="../{href}" target="_blank"').replace(
+                "← กลับไปอ่านสรุป", "📄 เปิดข้อสอบ PDF ต้นฉบับ")
+            q = re.sub(r"(<body[^>]*>)", lambda m: m.group(1) + "\n" + bar, q, count=1)
+            q = q.replace("<head>", '<head>\n<meta name="viewport" content="width=device-width, initial-scale=1">', 1)
+            (qdir / "quiz.html").write_text(q, encoding="utf-8")
+            qhref = f"{qdir.name}/quiz.html"
+        main_href = qhref or href
+        exam_rows += (f'<li class="lesson-row"><span class="num">🎯</span>'
+                      f'<a class="lesson-link" href="{main_href}"><small>แบบฝึกหัดทบทวนก่อนสอบ · รวมทุกบท</small>'
                       f'<span>{esc(pdf.stem)} — ข้อสอบบทที่ 5–8 (70 ข้อ พร้อมเฉลย)</span></a>'
-                      f'<div class="row-actions"><a class="chip chip-quiz" href="{href}" target="_blank">📄 เปิดข้อสอบ</a>'
-                      f'<a class="chip" href="{href}" download>⬇ ดาวน์โหลด</a></div></li>')
+                      f'<div class="row-actions">'
+                      + (f'<a class="chip chip-quiz" href="{qhref}">📝 ทำข้อสอบ</a>' if qhref else "")
+                      + f'<a class="chip" href="{href}" target="_blank">📄 PDF</a></div></li>')
     exam_block = (f'<h2 style="margin:24px 0 8px">🎯 ข้อสอบฝึก</h2><ol class="lesson-list">{exam_rows}</ol>'
                   f'<h2 style="margin:24px 0 8px">📖 สรุปรายบท</h2>' if exam_rows else "")
 
