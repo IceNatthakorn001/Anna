@@ -8,6 +8,7 @@ import json
 import re
 import shutil
 from pathlib import Path
+from urllib.parse import quote
 
 from markdown_it import MarkdownIt
 from mdit_py_plugins.anchors import anchors_plugin
@@ -183,6 +184,19 @@ def build():
                  f'<span>{esc(les["title"])}</span></a>'
                  f'<div class="row-actions"><a class="chip" href="{les["slug"]}/index.html">📖 อ่าน</a>{qlink}</div></li>')
 
+    # extra files published unchanged (e.g. the practice exam PDF), listed above the chapters
+    exam_rows = ""
+    for pdf in sorted(ROOT.glob("*.pdf")):
+        shutil.copy2(pdf, OUT / pdf.name)
+        href = quote(pdf.name)
+        exam_rows += (f'<li class="lesson-row"><span class="num">📄</span>'
+                      f'<a class="lesson-link" href="{href}" target="_blank"><small>แบบฝึกหัดทบทวนก่อนสอบ · PDF</small>'
+                      f'<span>{esc(pdf.stem)} — ข้อสอบบทที่ 5–8 (70 ข้อ พร้อมเฉลย)</span></a>'
+                      f'<div class="row-actions"><a class="chip chip-quiz" href="{href}" target="_blank">📄 เปิดข้อสอบ</a>'
+                      f'<a class="chip" href="{href}" download>⬇ ดาวน์โหลด</a></div></li>')
+    exam_block = (f'<h2 style="margin:24px 0 8px">🎯 ข้อสอบฝึก</h2><ol class="lesson-list">{exam_rows}</ol>'
+                  f'<h2 style="margin:24px 0 8px">📖 สรุปรายบท</h2>' if exam_rows else "")
+
     nq = sum(1 for l in lessons if l["quiz"])
     home = f"""
 <main class="wrap">
@@ -194,7 +208,7 @@ def build():
       <ul id="results"></ul>
     </div>
   </section>
-  <ol class="lesson-list">{rows}</ol>
+  {exam_block}<ol class="lesson-list">{rows}</ol>
 </main>
 <script>window.SEARCH_INDEX = {json.dumps(search_index, ensure_ascii=False)};</script>"""
     (OUT / "index.html").write_text(page(f"{COURSE['code']} · สรุปบทเรียน", home, 0), encoding="utf-8")
