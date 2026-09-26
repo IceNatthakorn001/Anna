@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>Quiz: บทที่ 6 สุขภาพและการออกกำลังกาย</title>
+<style>
+  body {
+    font-family: "Segoe UI", "Tahoma", sans-serif;
+    background: #f5f6fa;
+    color: #1a1a1a;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+    line-height: 1.6;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .sub { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+  }
+  .progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .progress { color: #888; font-size: 0.9rem; }
+  .tag {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .tag.recall { background: #e8eaf6; color: #3f51b5; }
+  .tag.understand { background: #fff3e0; color: #ef6c00; }
+  .tag.apply { background: #e0f2f1; color: #00796b; }
+  .question { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; }
+  .choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #1a1a1a;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .choice:hover { background: #f0f0f0; }
+  .choice.correct { background: #e3f7e8; border-color: #4caf50; }
+  .choice.wrong { background: #fdeaea; border-color: #e57373; }
+  .explain {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  .explain.correct-bg { background: #e3f7e8; border: 1px solid #4caf50; }
+  .explain.wrong-bg { background: #fdeaea; border: 1px solid #e57373; }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  button.nav-btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    background: #3f51b5;
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  button.nav-btn:disabled { background: #bbb; cursor: not-allowed; }
+  .score-box {
+    text-align: center;
+    padding: 24px;
+  }
+  .score-box .big { font-size: 2rem; font-weight: 700; margin: 12px 0; }
+  .breakdown {
+    text-align: left;
+    max-width: 320px;
+    margin: 16px auto 0;
+    font-size: 0.95rem;
+  }
+  .breakdown div { display: flex; justify-content: space-between; padding: 4px 0; }
+  #restartBtn {
+    margin-top: 12px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #3f51b5;
+    color: #fff;
+    cursor: pointer;
+  }
+  .jumpgrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .jumpgrid button {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .jumpgrid button.current { border-color: #3f51b5; font-weight: 700; }
+  .jumpgrid button.done-correct { background: #e3f7e8; border-color: #4caf50; }
+  .jumpgrid button.done-wrong { background: #fdeaea; border-color: #e57373; }
+</style>
+</head>
+<body>
+<div style="position:sticky;top:0;z-index:50;margin:-24px -16px 20px;padding:10px 16px;background:rgba(245,246,250,.92);backdrop-filter:blur(8px);border-bottom:1px solid #e3e5ee;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:.92rem">
+<a href="index.html" style="color:#3f51b5;text-decoration:none;font-weight:600">← กลับไปอ่านสรุป</a>
+<span style="color:#999">|</span>
+<a href="../index.html" style="color:#555;text-decoration:none">หน้าแรก</a>
+</div>
+
+<h1>Quiz: บทที่ 6 สุขภาพและการออกกำลังกาย</h1>
+<div class="sub">30 ข้อ แบ่งเป็นความจำ 12 ข้อ ความเข้าใจ 12 ข้อ และการนำไปใช้ 6 ข้อ — กดเลือกคำตอบแต่ละข้อ จะเห็นเหตุผลทันที คะแนนนับจากการกดครั้งแรกของแต่ละข้อเท่านั้น</div>
+
+<div class="jumpgrid" id="jumpGrid"></div>
+<div id="quizArea"></div>
+
+<script>
+const TAG_LABEL = { recall: "ความจำ", understand: "ความเข้าใจ", apply: "การนำไปใช้" };
+
+const questions = [
+ {
+  "type": "recall",
+  "q": "พ.ร.บ.สุขภาพแห่งชาติ พ.ศ. 2550 นิยามสุขภาพว่าสมบูรณ์เชื่อมโยงกันในด้านใด?",
+  "choices": [
+   "กาย และจิตใจเท่านั้น",
+   "กาย จิต และสังคม",
+   "กาย จิต ปัญญา และสังคม",
+   "กาย เศรษฐกิจ และสังคม"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ขาดมิติสังคมและปัญญา",
+   "ผิด — นี่คือนิยามของ WHO (2001) ซึ่งไม่มีมิติปัญญา",
+   "ถูก — พ.ร.บ. 2550 มี 4 มิติ: กาย จิต ปัญญา สังคม เป็นองค์รวมอย่างสมดุล",
+   "ผิด — เศรษฐกิจไม่ได้อยู่ในนิยาม"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "สูตรคำนวณดัชนีมวลกาย (BMI) คือข้อใด?",
+  "choices": [
+   "ส่วนสูง (ม.)² ÷ น้ำหนัก (กก.)",
+   "น้ำหนัก (กก.) × ส่วนสูง (ม.)",
+   "น้ำหนัก (กก.) ÷ ส่วนสูง (ซม.)",
+   "น้ำหนัก (กก.) ÷ ส่วนสูง (ม.)²"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — กลับเศษส่วน",
+   "ผิด — ต้องหาร ไม่ใช่คูณ",
+   "ผิด — ต้องใช้หน่วยเมตรและยกกำลังสอง",
+   "ถูก — BMI = น้ำหนักเป็นกิโลกรัม หารด้วยส่วนสูงเป็นเมตรยกกำลังสอง"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ค่า BMI 25–29.9 จัดอยู่ในเกณฑ์ใด?",
+  "choices": [
+   "น้ำหนักเกิน",
+   "โรคอ้วน",
+   "น้ำหนักเหมาะสม",
+   "น้ำหนักน้อย"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — 25–29.9 = น้ำหนักเกิน",
+   "ผิด — โรคอ้วนคือ > 30",
+   "ผิด — เหมาะสมคือ 18.5–24.9",
+   "ผิด — น้ำหนักน้อยคือ < 18.5"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "อัตราชีพจรปกติของผู้หญิงอยู่ที่ประมาณกี่ครั้งต่อนาที?",
+  "choices": [
+   "60 ± 5",
+   "90 ± 5",
+   "72 ± 5",
+   "78 ± 5"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ต่ำกว่าค่าในสไลด์",
+   "ผิด — สูงกว่าค่าในสไลด์",
+   "ผิด — 72 ± 5 คือค่าของผู้ชาย",
+   "ถูก — หญิง 78 ± 5 ครั้ง/นาที"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ขั้นตอนแรกของการออกกำลังกายตามบทเรียนคือข้อใด?",
+  "choices": [
+   "กำหนดความหนักด้วยชีพจร",
+   "ตรวจสุขภาพ",
+   "อบอุ่นร่างกาย",
+   "ผ่อนคลายกล้ามเนื้อ"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — เป็นขั้นที่ 3",
+   "ถูก — ขั้นที่ 1 คือตรวจสุขภาพ ปรึกษาแพทย์หรือผู้เชี่ยวชาญ",
+   "ผิด — อบอุ่นร่างกายเป็นขั้นที่ 2",
+   "ผิด — เป็นขั้นสุดท้าย (ขั้นที่ 5)"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "หลัก 5 อ. ในการดูแลสุขภาพ ไม่รวมข้อใด?",
+  "choices": [
+   "อากาศ",
+   "อุจจาระ",
+   "อารมณ์",
+   "อาชีพ"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — อากาศเป็น 1 ใน 5 อ.",
+   "ผิด — อุจจาระ (การขับถ่าย) เป็น 1 ใน 5 อ.",
+   "ผิด — อารมณ์เป็น 1 ใน 5 อ.",
+   "ถูก — 5 อ. = อาหาร ออกกำลังกาย อากาศ อุจจาระ อารมณ์ ไม่มีอาชีพ"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ยาฝังคุมกำเนิดชนิดฮอร์โมนโปรเจสโตเจนสังเคราะห์ คุมกำเนิดได้นานกี่ปี?",
+  "choices": [
+   "3 ปี",
+   "1 ปี",
+   "5 ปี",
+   "10 ปี"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — สั้นกว่าที่สไลด์ระบุ",
+   "ผิด — สั้นกว่าที่สไลด์ระบุ",
+   "ถูก — ยาฝังคุมกำเนิดคุมได้นาน 5 ปี",
+   "ผิด — นานกว่าที่สไลด์ระบุ"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "องค์ประกอบของสุขภาวะทางจิตตามบทเรียน ได้แก่ข้อใด?",
+  "choices": [
+   "ครอบครัว ชุมชน ประเทศ โลก",
+   "รู้เท่าทัน วิเคราะห์ การกระทำ ความสุขที่แท้",
+   "ความเข้มแข็ง ความเมตตา ความสงบ ความเป็นอิสระ",
+   "ปราศจากโรค ความมั่นคง สภาพแวดล้อม"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — เป็นวงของสุขภาวะทางสังคม",
+   "ผิด — เป็นบันไดของสุขภาวะทางปัญญา",
+   "ถูก — สุขภาวะทางจิต 4 องค์ประกอบ",
+   "ผิด — เป็นองค์ประกอบของสุขภาวะทางกาย"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ขั้นฐานราก (Step 1) ของสุขภาวะทางปัญญาคือข้อใด?",
+  "choices": [
+   "ดำเนินชีวิตด้วยการเป็นผู้ให้",
+   "แยกแยะเหตุผลความดีความชั่ว",
+   "บรรลุความสุขที่แท้ด้วยปัญญา",
+   "รู้เท่าทันความจริงของชีวิตและโลก"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — เป็น Step 3 (การกระทำ)",
+   "ผิด — เป็น Step 2 (การวิเคราะห์)",
+   "ผิด — เป็นเป้าหมายสูงสุด (Apex)",
+   "ถูก — Step 1 ฐานราก: รู้เท่าทันความจริงของชีวิตและโลก"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "สูตรคำนวณอัตราชีพจรต่อนาทีตามบทเรียนคือข้อใด?",
+  "choices": [
+   "จำนวนครั้งใน 15 วินาที ÷ 4",
+   "จำนวนครั้งใน 30 วินาที × 4",
+   "จำนวนครั้งใน 15 วินาที × 4",
+   "จำนวนครั้งใน 10 วินาที × 10"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ต้องคูณ ไม่ใช่หาร",
+   "ผิด — 30 วินาทีต้องคูณ 2",
+   "ถูก — ชีพจร/นาที = 4 × จำนวนครั้งที่จับได้ใน 15 วินาที",
+   "ผิด — 10 วินาทีต้องคูณ 6 และไม่ใช่สูตรในสไลด์"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "การทำหมันหญิงทำได้ในระยะใดบ้าง?",
+  "choices": [
+   "ระยะก่อนแต่งงานเท่านั้น",
+   "ระยะตั้งครรภ์ และหลังคลอด",
+   "ระยะหลังคลอด และระยะปกติ",
+   "เฉพาะระยะหลังหมดประจำเดือน"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — สไลด์ไม่ได้กล่าวเช่นนั้น",
+   "ผิด — ไม่ทำในระยะตั้งครรภ์",
+   "ถูก — ทำหมันหญิงได้ 2 ระยะ: หลังคลอด และระยะปกติ",
+   "ผิด — สไลด์ไม่ได้กล่าวเช่นนั้น"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ในการอบอุ่นร่างกาย ควรออกกำลังเบา ๆ เช่น วิ่งเหยาะ ประมาณกี่นาที?",
+  "choices": [
+   "5–10 นาที",
+   "45–60 นาที",
+   "1–2 นาที",
+   "20–30 นาที"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — วิ่งเหยาะหรือเดินเร็ว 5–10 นาที ให้หัวใจค่อย ๆ เต้นเร็วขึ้น",
+   "ผิด — นานเกินไปสำหรับการอบอุ่นร่างกาย",
+   "ผิด — สั้นเกินไป",
+   "ผิด — 30 นาทีคือเป้าหมายการออกกำลังกายหลัก"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "นิยามสุขภาพของ WHO ต่างจาก พ.ร.บ.สุขภาพแห่งชาติ 2550 อย่างไร?",
+  "choices": [
+   "WHO ไม่มีมิติทางปัญญา",
+   "พ.ร.บ. ไม่มีมิติทางกาย",
+   "พ.ร.บ. ไม่มีมิติทางสังคม",
+   "WHO ไม่มีมิติทางจิต"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — WHO = กาย จิต สังคม ส่วน พ.ร.บ. เพิ่มมิติปัญญาเป็น 4 ด้าน",
+   "ผิด — พ.ร.บ. มีมิติกาย",
+   "ผิด — พ.ร.บ. มีมิติสังคม",
+   "ผิด — WHO มีมิติทางจิตใจ"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "\"ความมั่นคงพื้นฐาน ไม่ขาดแคลนวัตถุปัจจัย\" เป็นองค์ประกอบของสุขภาวะด้านใด?",
+  "choices": [
+   "ทางกาย",
+   "ทางปัญญา",
+   "ทางจิต",
+   "ทางสังคม"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — สุขภาวะทางกาย = ปราศจากโรค + ความมั่นคงพื้นฐาน + สภาพแวดล้อม",
+   "ผิด — ทางปัญญาคือบันได 4 ขั้น",
+   "ผิด — ทางจิตคือเข้มแข็ง เมตตา สงบ อิสระ",
+   "ผิด — ทางสังคมคือการอยู่ร่วมกันด้วยดี"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมช่วงตั้งครรภ์ 1–3 เดือนแรกจึงต้องดูแลเป็นพิเศษ?",
+  "choices": [
+   "ทารกเล็ก แท้งง่าย และมีโอกาสพิการสูง",
+   "ทารกสร้างอวัยวะครบแล้ว",
+   "ทารกพร้อมคลอดแล้ว",
+   "ต้องกินโปรตีนมากที่สุด"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ระยะแรกเริ่มแพ้ท้อง ทารกเล็ก กระทบกระเทือนแท้งง่าย เสี่ยงพิการสูง",
+   "ผิด — อวัยวะครบคือระยะ 7–9 เดือน",
+   "ผิด — พร้อมคลอดคือไตรมาสสุดท้าย",
+   "ผิด — การเสริมโปรตีนเน้นในระยะ 4–6 เดือน"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "จุดประสงค์หลักของการอบอุ่นร่างกาย (warm up) คือข้อใด?",
+  "choices": [
+   "ให้เลือดกลับไปเลี้ยงสมอง",
+   "กระตุ้นอวัยวะให้พร้อมทำงาน และลดการบาดเจ็บ",
+   "ทำให้หัวใจเต้นช้าลง",
+   "ลดน้ำหนักให้เร็วที่สุด"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — นั่นคือจุดประสงค์ของการผ่อนคลาย (cool down)",
+   "ถูก — warm up กระตุ้นอวัยวะให้พร้อม และลดอาการบาดเจ็บ",
+   "ผิด — ทำให้หัวใจค่อย ๆ เต้นเร็วขึ้น",
+   "ผิด — ไม่ใช่จุดประสงค์ของการอบอุ่น"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมต้องผ่อนคลายกล้ามเนื้อหลังออกกำลังกาย แทนการหยุดทันที?",
+  "choices": [
+   "เพื่อให้กล้ามเนื้อเกร็งตัว",
+   "ให้หัวใจค่อย ๆ เต้นช้าลง และเลือดที่คั่งกลับไปเลี้ยงอวัยวะสำคัญ เช่น สมอง",
+   "เพื่อเพิ่มอัตราชีพจรให้สูงสุด",
+   "เพื่อเผาผลาญไขมันเพิ่ม"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — เป็นการผ่อนคลาย ไม่ใช่เกร็ง",
+   "ถูก — cool down ให้เลือดที่คั่งตามแขนขากลับเข้าระบบไหลเวียน โดยเฉพาะไปเลี้ยงสมอง",
+   "ผิด — เป็นการลดความเข้ม ไม่ใช่เพิ่มชีพจร",
+   "ผิด — ไม่ใช่จุดประสงค์ในสไลด์"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "สุขภาวะทางสังคมตามบทเรียน ขยายวงอย่างไร?",
+  "choices": [
+   "จากโรงเรียน → ที่ทำงานเท่านั้น",
+   "จากครอบครัว → ชุมชน/ที่ทำงาน → ประเทศ → ทั้งโลก",
+   "จากร่างกาย → จิตใจ → ปัญญา",
+   "จากโลก → ประเทศ → ครอบครัว"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — แคบเกินไป",
+   "ถูก — เริ่มจากครอบครัว ขยายสู่ชุมชน สังคมใหญ่ และการอยู่ร่วมกันด้วยดีทั้งโลก",
+   "ผิด — นั่นคือมิติสุขภาพต่าง ๆ ไม่ใช่วงสังคม",
+   "ผิด — ทิศทางกลับกัน"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมบทเรียนจึงเปรียบร่างกายกับเครื่องจักร?",
+  "choices": [
+   "เพราะใช้งานแล้วไม่ดูแลก็ทรุดโทรม แต่ร่างกายเปลี่ยนอะไหล่ไม่ได้",
+   "เพราะร่างกายเปลี่ยนอะไหล่ได้เหมือนเครื่องจักร",
+   "เพราะร่างกายทำงานด้วยไฟฟ้า",
+   "เพราะร่างกายไม่ต้องพักผ่อน"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — จึงต้องดูแลสุขภาพในแต่ละวัย",
+   "ผิด — จุดสำคัญคือร่างกายเปลี่ยนไม่ได้",
+   "ผิด — ไม่ใช่ประเด็นของการเปรียบเทียบ",
+   "ผิด — ขัดกับหลักดูแลสุขภาพ"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ตามตาราง \"วิวัฒนาการความต้องการด้านสุขภาพ\" วัยผู้ใหญ่มีเป้าหมายหลักคืออะไร?",
+  "choices": [
+   "หลีกเลี่ยงสารเสพติดและควบคุมอารมณ์",
+   "ฉีดวัคซีนและสร้างนิสัยสุขภาพ",
+   "ให้ผู้ปกครองจัดการสุขอนามัยพื้นฐาน",
+   "ลดความเครียดและชะลอความเสื่อมถอย"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — เป็นการดูแลวัยรุ่น",
+   "ผิด — เป็นการดูแลวัยเด็ก",
+   "ผิด — เป็นเป้าหมายวัยเด็ก (ระยะพึ่งพา)",
+   "ถูก — วัยผู้ใหญ่ = ระยะบำรุงรักษา ลดความเครียด ชะลอความเสื่อม เฝ้าระวังโรคเรื้อรัง"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมการเลือกคู่ครองจึงใช้ความรักเพียงอย่างเดียวไม่ได้?",
+  "choices": [
+   "เพราะต้องเลือกตามที่พ่อแม่กำหนด",
+   "เพราะกฎหมายห้าม",
+   "เพราะต้องมีเกณฑ์อื่น เช่น อายุ สุขภาพ วุฒิภาวะ ศาสนา วัฒนธรรม ฐานะ ด้วย",
+   "เพราะความรักไม่สำคัญเลย"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — สไลด์ไม่ได้กล่าว",
+   "ผิด — ไม่เกี่ยวกับกฎหมาย",
+   "ถูก — ต้องมีทั้งความรักเป็นพื้นฐาน และสภาวะด้านต่าง ๆ ที่เหมาะสม",
+   "ผิด — ความรักยังเป็นพื้นฐานข้อแรก"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ยาคุมกำเนิดฉุกเฉินควรใช้อย่างไรตามบทเรียน?",
+  "choices": [
+   "ใช้เฉพาะกรณีฉุกเฉินเท่านั้น ไม่ใช่การวางแผนครอบครัวต่อเนื่อง",
+   "ใช้แปะผิวหนังทุกสัปดาห์",
+   "ใช้เพื่อคุมกำเนิดถาวร",
+   "ใช้เป็นประจำแทนยาเม็ดปกติ"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ใช้เฉพาะฉุกเฉิน ไม่ควรใช้วางแผนครอบครัวแบบต่อเนื่อง",
+   "ผิด — แบบแปะคือ ORTHO EVRA",
+   "ผิด — การคุมถาวรคือการทำหมัน",
+   "ผิด — สไลด์เตือนว่าไม่ควรใช้ต่อเนื่อง"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "คนวัยหนุ่มสาวอายุต่ำกว่า 35 ปีที่แข็งแรง ควรเริ่มออกกำลังกายอย่างไร?",
+  "choices": [
+   "เริ่มหนักที่สุดทันทีเพื่อผลที่เร็ว",
+   "ห้ามออกกำลังกายเกิน 5 นาที",
+   "เริ่มได้เลย แต่เริ่มจากความเร็วน้อย ไม่หนักมาก แล้วค่อยเพิ่ม",
+   "ต้องรอให้แพทย์อนุญาตเป็นลายลักษณ์อักษรก่อน"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ขัดกับหลักค่อยเป็นค่อยไป",
+   "ผิด — เป้าหมายคือ 30 นาที",
+   "ถูก — แข็งแรงและอายุ < 35 ปีเริ่มได้เลย แต่เริ่มเบาแล้วค่อยเพิ่ม",
+   "ผิด — สไลด์ระบุว่าออกกำลังได้เลย"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ปัญหาที่พบบ่อยในผู้สูงอายุตามบทเรียนคือข้อใด?",
+  "choices": [
+   "อุบัติเหตุจากการขับรถเร็ว",
+   "ความเครียด ซึมเศร้า นอนไม่หลับ สมองเสื่อม",
+   "สิว และผิวมัน",
+   "ปัญหายาเสพติด"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — อุบัติเหตุเด่นในวัยรุ่น",
+   "ถูก — เครียด วิตกกังวล ซึมเศร้า นอนไม่หลับ สมองเสื่อม",
+   "ผิด — ไม่ใช่ปัญหาหลักของวัยนี้",
+   "ผิด — ยาเสพติดเด่นในวัยรุ่น"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "นาย ก. หนัก 81 กก. สูง 1.80 ม. ค่า BMI อยู่ในเกณฑ์ใด?",
+  "choices": [
+   "น้ำหนักน้อย",
+   "น้ำหนักเกิน",
+   "น้ำหนักเหมาะสม",
+   "โรคอ้วน"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — BMI ไม่ต่ำกว่า 18.5",
+   "ถูก — 81 ÷ (1.8×1.8) = 81 ÷ 3.24 = 25 → น้ำหนักเกิน (25–29.9)",
+   "ผิด — BMI เกิน 24.9",
+   "ผิด — ยังไม่ถึง 30"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "จับชีพจรที่ข้อมือได้ 20 ครั้งใน 15 วินาที อัตราชีพจรต่อนาทีคือเท่าใด?",
+  "choices": [
+   "300 ครั้ง/นาที",
+   "80 ครั้ง/นาที",
+   "35 ครั้ง/นาที",
+   "60 ครั้ง/นาที"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — คูณ 15 ผิดสูตร",
+   "ถูก — 20 × 4 = 80 ครั้ง/นาที",
+   "ผิด — คำนวณผิด",
+   "ผิด — 20 × 3 ไม่ใช่สูตรที่ถูก"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ผู้เริ่มออกกำลังกายวิ่งได้แค่ 10 นาทีก็เหนื่อย ควรปรับอย่างไรตามบทเรียน?",
+  "choices": [
+   "วิ่งเฉพาะวันหยุด ครั้งละหลายชั่วโมง",
+   "เลิกออกกำลังกายเพราะไม่เหมาะกับตัวเอง",
+   "วิ่งให้ครบ 60 นาทีตั้งแต่วันแรก",
+   "ออกบ่อย ๆ แต่พอควร ค่อย ๆ เพิ่มเวลาช้า ๆ โดยมีเป้าหมาย 30 นาที"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ไม่สม่ำเสมอและหนักเกินไป",
+   "ผิด — ไม่ใช่คำแนะนำในบทเรียน",
+   "ผิด — หนักเกินไปสำหรับผู้เริ่มต้น",
+   "ถูก — ผู้เริ่มต้นควรออกบ่อยแต่พอควร แล้วเพิ่มเวลาช้า ๆ สู่เป้าหมาย 30 นาที"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "คุณยายชอบเก็บตัวอยู่คนเดียวเมื่อรู้สึกเศร้า ลูกหลานควรช่วยตามหลักการดูแลด้านจิตใจอย่างไร?",
+  "choices": [
+   "ให้ออกกำลังกายหนักทุกวัน",
+   "ชวนพบปะพูดคุย แลกเปลี่ยนความคิดเห็น และทำงานอดิเรกที่ชอบ",
+   "ปล่อยให้อยู่คนเดียวเพื่อความสงบ",
+   "ให้ย้ายไปอยู่ที่อื่นคนเดียว"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — ผู้สูงอายุเน้นการเคลื่อนไหวเบา ๆ ไม่ใช่ออกกำลังหนัก",
+   "ถูก — ตรงกับการดูแลด้านจิตใจของผู้สูงอายุในสไลด์",
+   "ผิด — ควรหลีกเลี่ยงการอยู่คนเดียวเมื่อเศร้า",
+   "ผิด — ยิ่งเพิ่มความโดดเดี่ยว"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "พนักงานออฟฟิศท้องผูกบ่อยและเครียดสะสม ตามหลัก 5 อ. ควรปรับเรื่องใดเป็นหลัก?",
+  "choices": [
+   "อุจจาระ และอารมณ์",
+   "อากาศ และอนามัย",
+   "ออกกำลังกาย และอาชีพ",
+   "อาหาร และอากาศ"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ท้องผูก = อ.อุจจาระ (ขับถ่ายสม่ำเสมอ) และเครียด = อ.อารมณ์",
+   "ผิด — อนามัยไม่อยู่ใน 5 อ.",
+   "ผิด — อาชีพไม่อยู่ใน 5 อ.",
+   "ผิด — ไม่ตรงกับปัญหาที่ระบุโดยตรง"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "คู่รักคู่หนึ่งมีศาสนาและวัฒนธรรมต่างกันมาก ตามเกณฑ์เลือกคู่ครองควรพิจารณาเรื่องใด?",
+  "choices": [
+   "ดูแค่ฐานะเศรษฐกิจก็พอ",
+   "ต้องเลิกกันทันที",
+   "ไม่ต้องสนใจ เพราะความรักสำคัญที่สุดอย่างเดียว",
+   "ศาสนามีพิธีกรรมต่างกัน วัฒนธรรมที่คล้ายกันปรับตัวง่ายกว่า จึงต้องคุยเรื่องการปรับตัว"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ฐานะเป็นเพียงหนึ่งในหลายเกณฑ์",
+   "ผิด — สไลด์ไม่ได้บอกว่าต้องเลิก แต่ให้พิจารณา",
+   "ผิด — ความรักอย่างเดียวไม่พอ ต้องมีสภาวะอื่นที่เหมาะสม",
+   "ถูก — ศาสนาและวัฒนธรรมเป็นสภาวะที่ต้องพิจารณาในการเลือกคู่"
+  ]
+ }
+];
+
+let current = 0;
+const answered = new Array(questions.length).fill(null); // currently displayed choice per question
+const firstChoices = new Array(questions.length).fill(null); // choice used for scoring (first click only)
+
+function buildJumpGrid() {
+  const grid = document.getElementById('jumpGrid');
+  let html = '';
+  questions.forEach((q, i) => {
+    html += '<button data-i="' + i + '" onclick="jumpTo(' + i + ')">' + (i+1) + '</button>';
+  });
+  grid.innerHTML = html;
+  updateJumpGrid();
+}
+
+function updateJumpGrid() {
+  const grid = document.getElementById('jumpGrid');
+  Array.from(grid.children).forEach((btn, i) => {
+    btn.className = '';
+    if (i === current && current < questions.length) btn.classList.add('current');
+    if (firstChoices[i] !== null) {
+      btn.classList.add(firstChoices[i] === questions[i].correct ? 'done-correct' : 'done-wrong');
+    }
+  });
+}
+
+function jumpTo(i) {
+  current = i;
+  render();
+}
+
+function render() {
+  const area = document.getElementById('quizArea');
+  updateJumpGrid();
+  if (current >= questions.length) {
+    renderScore();
+    return;
+  }
+  const qd = questions[current];
+  const chosen = answered[current];
+
+  let html = '<div class="card">';
+  html += '<div class="progress-row">';
+  html += '<div class="progress">ข้อ ' + (current+1) + ' / ' + questions.length + '</div>';
+  html += '<div class="tag ' + qd.type + '">' + TAG_LABEL[qd.type] + '</div>';
+  html += '</div>';
+  html += '<div class="question">' + qd.q + '</div>';
+
+  qd.choices.forEach((c, i) => {
+    let cls = 'choice';
+    if (chosen !== null) {
+      if (i === qd.correct) cls += ' correct';
+      else if (i === chosen) cls += ' wrong';
+    }
+    html += '<button class="' + cls + '" onclick="selectChoice(' + i + ')">' + String.fromCharCode(3585+i) + '. ' + c + '</button>';
+    if (chosen !== null && i === chosen) {
+      const bgCls = (i === qd.correct) ? 'correct-bg' : 'wrong-bg';
+      html += '<div class="explain ' + bgCls + '">' + qd.explain[i] + '</div>';
+    }
+  });
+
+  html += '<div class="nav">';
+  html += '<button class="nav-btn" onclick="prevQ()" ' + (current===0?'disabled':'') + '>ก่อนหน้า</button>';
+  html += '<button class="nav-btn" onclick="nextQ()">' + (current===questions.length-1 ? 'ดูสรุปคะแนน' : 'ถัดไป') + '</button>';
+  html += '</div>';
+  html += '</div>';
+
+  area.innerHTML = html;
+}
+
+function selectChoice(i) {
+  if (firstChoices[current] === null) {
+    firstChoices[current] = i;
+  }
+  answered[current] = i;
+  render();
+}
+
+function nextQ() {
+  if (current < questions.length - 1) {
+    current++;
+  } else {
+    current = questions.length; // trigger score screen
+  }
+  render();
+}
+
+function prevQ() {
+  if (current > 0) current--;
+  render();
+}
+
+function renderScore() {
+  const score = firstChoices.reduce((acc, val, idx) => {
+    return (val !== null && val === questions[idx].correct) ? acc + 1 : acc;
+  }, 0);
+
+  const byType = { recall: [0,0], understand: [0,0], apply: [0,0] };
+  questions.forEach((qd, idx) => {
+    byType[qd.type][1]++;
+    if (firstChoices[idx] !== null && firstChoices[idx] === qd.correct) byType[qd.type][0]++;
+  });
+
+  const area = document.getElementById('quizArea');
+  let html = '<div class="card score-box">';
+  html += '<div>คุณทำแบบทดสอบเสร็จแล้ว</div>';
+  html += '<div class="big">' + score + ' / ' + questions.length + '</div>';
+  html += '<div class="breakdown">';
+  html += '<div><span>ความจำ</span><span>' + byType.recall[0] + ' / ' + byType.recall[1] + '</span></div>';
+  html += '<div><span>ความเข้าใจ</span><span>' + byType.understand[0] + ' / ' + byType.understand[1] + '</span></div>';
+  html += '<div><span>การนำไปใช้</span><span>' + byType.apply[0] + ' / ' + byType.apply[1] + '</span></div>';
+  html += '</div>';
+  html += '<button id="restartBtn" onclick="restart()">ทำใหม่อีกครั้ง</button>';
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function restart() {
+  current = 0;
+  for (let i = 0; i < questions.length; i++) {
+    answered[i] = null;
+    firstChoices[i] = null;
+  }
+  render();
+}
+
+buildJumpGrid();
+render();
+</script>
+
+</body>
+</html>

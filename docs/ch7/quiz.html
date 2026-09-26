@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>Quiz: บทที่ 7 เครื่องนุ่งห่ม</title>
+<style>
+  body {
+    font-family: "Segoe UI", "Tahoma", sans-serif;
+    background: #f5f6fa;
+    color: #1a1a1a;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+    line-height: 1.6;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .sub { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+  }
+  .progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .progress { color: #888; font-size: 0.9rem; }
+  .tag {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .tag.recall { background: #e8eaf6; color: #3f51b5; }
+  .tag.understand { background: #fff3e0; color: #ef6c00; }
+  .tag.apply { background: #e0f2f1; color: #00796b; }
+  .question { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; }
+  .choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #1a1a1a;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .choice:hover { background: #f0f0f0; }
+  .choice.correct { background: #e3f7e8; border-color: #4caf50; }
+  .choice.wrong { background: #fdeaea; border-color: #e57373; }
+  .explain {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  .explain.correct-bg { background: #e3f7e8; border: 1px solid #4caf50; }
+  .explain.wrong-bg { background: #fdeaea; border: 1px solid #e57373; }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  button.nav-btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    background: #3f51b5;
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  button.nav-btn:disabled { background: #bbb; cursor: not-allowed; }
+  .score-box {
+    text-align: center;
+    padding: 24px;
+  }
+  .score-box .big { font-size: 2rem; font-weight: 700; margin: 12px 0; }
+  .breakdown {
+    text-align: left;
+    max-width: 320px;
+    margin: 16px auto 0;
+    font-size: 0.95rem;
+  }
+  .breakdown div { display: flex; justify-content: space-between; padding: 4px 0; }
+  #restartBtn {
+    margin-top: 12px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #3f51b5;
+    color: #fff;
+    cursor: pointer;
+  }
+  .jumpgrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .jumpgrid button {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .jumpgrid button.current { border-color: #3f51b5; font-weight: 700; }
+  .jumpgrid button.done-correct { background: #e3f7e8; border-color: #4caf50; }
+  .jumpgrid button.done-wrong { background: #fdeaea; border-color: #e57373; }
+</style>
+</head>
+<body>
+<div style="position:sticky;top:0;z-index:50;margin:-24px -16px 20px;padding:10px 16px;background:rgba(245,246,250,.92);backdrop-filter:blur(8px);border-bottom:1px solid #e3e5ee;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:.92rem">
+<a href="index.html" style="color:#3f51b5;text-decoration:none;font-weight:600">← กลับไปอ่านสรุป</a>
+<span style="color:#999">|</span>
+<a href="../index.html" style="color:#555;text-decoration:none">หน้าแรก</a>
+</div>
+
+<h1>Quiz: บทที่ 7 เครื่องนุ่งห่ม</h1>
+<div class="sub">30 ข้อ แบ่งเป็นความจำ 12 ข้อ ความเข้าใจ 12 ข้อ และการนำไปใช้ 6 ข้อ — กดเลือกคำตอบแต่ละข้อ จะเห็นเหตุผลทันที คะแนนนับจากการกดครั้งแรกของแต่ละข้อเท่านั้น</div>
+
+<div class="jumpgrid" id="jumpGrid"></div>
+<div id="quizArea"></div>
+
+<script>
+const TAG_LABEL = { recall: "ความจำ", understand: "ความเข้าใจ", apply: "การนำไปใช้" };
+
+const questions = [
+ {
+  "type": "recall",
+  "q": "\"การนำเส้นใยหลาย ๆ เส้นมารวมกันแล้วบิดหรือเข้าเกลียว\" คือความหมายของอะไร?",
+  "choices": [
+   "เส้นด้าย (Yarn)",
+   "สิ่งทอ (Textiles)",
+   "เส้นใย (Fiber)",
+   "ผ้า (Fabric)"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — Yarn คือเส้นใยหลายเส้นบิด/เข้าเกลียวรวมกัน",
+   "ผิด — Textiles คือผลิตภัณฑ์ทุกชนิดที่ผลิตจากเส้นใย",
+   "ผิด — Fiber คือต้นกำเนิดของสิ่งทอ เป็นเส้นเล็กยาว",
+   "ผิด — Fabric คือสิ่งทอที่เป็นผืน"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "เส้นใยที่หุ้มเมล็ด (Surface fibers) ตัวอย่างสำคัญคืออะไร?",
+  "choices": [
+   "ลินิน",
+   "ฝ้าย",
+   "สับปะรด",
+   "ไหม"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — ลินินเป็นเส้นใยจากเปลือกไม้ (Soft fibers)",
+   "ถูก — ฝ้ายเป็นเส้นใยที่หุ้มเมล็ด",
+   "ผิด — สับปะรดเป็นเส้นใยจากใบ (Hard fibers)",
+   "ผิด — ไหมเป็นเส้นใยจากสัตว์"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ข้อใดเป็นเส้นใยจากใบ (Hard fibers) ทั้งหมด?",
+  "choices": [
+   "ลินิน ปอ กัญชา",
+   "สับปะรด ป่านศรนารายณ์ กล้วย ย่านลิเภา",
+   "ขนแกะ ไหม",
+   "ฝ้าย นุ่น"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — เป็นเส้นใยจากเปลือกไม้ (Soft fibers)",
+   "ถูก — เส้นใยจากใบได้แก่ สับปะรด ป่านศรนารายณ์ กล้วย ย่านลิเภา",
+   "ผิด — เป็นเส้นใยโปรตีนจากสัตว์",
+   "ผิด — ฝ้ายเป็นเส้นใยหุ้มเมล็ด"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "เส้นใยเรยอน (Rayon) เดิมรู้จักกันในชื่อใด?",
+  "choices": [
+   "ฝ้ายเทียม",
+   "ใยแก้ว",
+   "ขนแกะเทียม",
+   "ไหมเทียม"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ไม่ใช่ชื่อในสไลด์",
+   "ผิด — ใยแก้วเป็นฉนวน ไม่ใช่เรยอน",
+   "ผิด — ไม่ใช่ชื่อในสไลด์",
+   "ถูก — เรยอนเป็นเซลลูโลสสังเคราะห์ (regenerated cellulose) เดิมเรียกว่าไหมเทียม"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "เส้นใยโปรตีนสังเคราะห์ \"Ardil\" ได้มาจากวัตถุดิบใด?",
+  "choices": [
+   "ฝ้าย",
+   "ถั่วเหลือง",
+   "ถั่วลิสง",
+   "ข้าวโพด"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ฝ้ายเป็นเซลลูโลส ไม่ใช่โปรตีน",
+   "ผิด — สไลด์กล่าวถึงถั่วเหลือง แต่ไม่ได้ระบุว่าเป็น Ardil",
+   "ถูก — Ardil ได้จากถั่วลิสง",
+   "ผิด — ข้าวโพดคือ Vicara"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "กระบวนการขึ้นรูปเป็นเส้นใย (fiber spinning) พื้นฐานมี 3 แบบ คือข้อใด?",
+  "choices": [
+   "ปั่นเย็น ปั่นร้อน ปั่นเปียก",
+   "ปั่นมือ ปั่นเครื่อง ปั่นไฟฟ้า",
+   "ปั่นแห้ง ปั่นเปียก ปั่นหลอม",
+   "ทอ ถัก อัด"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ไม่มีปั่นเย็น/ปั่นร้อนในสไลด์",
+   "ผิด — ไม่ใช่การแบ่งตามสไลด์",
+   "ถูก — dry spinning, wet spinning, melt spinning",
+   "ผิด — เป็นวิธีทำผ้า ไม่ใช่การขึ้นรูปเส้นใย"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "อนุภาคนาโนใดในเสื้อนาโนมีคุณสมบัติกันการซึมผ่านของแก๊ส?",
+  "choices": [
+   "นาโนเคลย์ (Montmorillonite)",
+   "กลูโคสออกซิเดส",
+   "ไทเทเนียมไดออกไซด์",
+   "ซิลเวอร์ออกไซด์"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — นาโนเคลย์ เช่น Montmorillonite กันการซึมผ่านของแก๊ส",
+   "ผิด — เป็นเอนไซม์ในเสื้อคุมเบาหวาน ไม่ใช่อนุภาคนาโน",
+   "ผิด — TiO₂ เป็นตัวเร่งสลายมลพิษ",
+   "ผิด — ซิลเวอร์ออกไซด์ยับยั้งแบคทีเรียและกัน UV"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "สัญลักษณ์รูป \"สามเหลี่ยม\" บนป้ายผ้าหมายถึงอะไร?",
+  "choices": [
+   "การรีด",
+   "การตาก",
+   "การซักแห้ง",
+   "น้ำยาฟอกขาว"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — การรีดใช้รูปเตารีด",
+   "ผิด — การตากใช้รูปสี่เหลี่ยม",
+   "ผิด — การซักแห้งใช้รูปวงกลม",
+   "ถูก — สามเหลี่ยม = น้ำยาฟอกขาว (มีกากบาท = ห้ามใช้)"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ขั้นตอนแรกของการผลิตเส้นใยขนสัตว์ (Wool) คือข้อใด?",
+  "choices": [
+   "ทำความสะอาดด้วยสบู่",
+   "ปั่นเป็นเส้นด้าย",
+   "นำขนที่ตัด/เล็มมาแบ่งเกรดตามคุณภาพ",
+   "สางเส้นใย"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ทำความสะอาดหลังผสมขนเกรดเดียวกัน",
+   "ผิด — ปั่นเป็นด้ายอยู่ช่วงท้าย",
+   "ถูก — ขั้นแรกคือแบ่งเกรดตามคุณภาพเส้นใย",
+   "ผิด — สางเส้นใยหลังทำความสะอาด"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "เครื่องนุ่งห่มนวัตกรรมใหม่แบ่งเป็น 4 กลุ่ม ข้อใดไม่ใช่หนึ่งในนั้น?",
+  "choices": [
+   "เพื่อลดน้ำหนักตัว",
+   "อัจฉริยะ",
+   "ปรับตัวตามสภาวะแวดล้อม",
+   "เพื่อปกป้องสุขภาพ"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — กลุ่มที่ 4 คือเกี่ยวกับการบำรุงผิวพรรณ ไม่ใช่ลดน้ำหนัก",
+   "ผิด — เป็นกลุ่มที่ 3",
+   "ผิด — เป็นกลุ่มที่ 2",
+   "ผิด — เป็นกลุ่มที่ 1"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ข้อใดเป็นเส้นใยโพลิเมอร์สังเคราะห์ทั้งหมด?",
+  "choices": [
+   "ฝ้าย ลินิน ปอ",
+   "ไนลอน โพลิเอสเตอร์ อะคริลิค โอลิฟิน",
+   "ขนแกะ ไหม",
+   "เรยอน Vicara Ardil"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — เป็นเส้นใยธรรมชาติจากพืช",
+   "ถูก — ผลิตจากสารเคมี (โพลิเมอร์) ด้วยวิธีทางเคมี",
+   "ผิด — เป็นเส้นใยธรรมชาติจากสัตว์",
+   "ผิด — เรยอนคือเซลลูโลสสังเคราะห์ Vicara/Ardil คือโปรตีนสังเคราะห์"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "สารใดใช้เคลือบผ้าในกลุ่มเครื่องนุ่งห่มบำรุงผิวพรรณ ตามตัวอย่างในสไลด์?",
+  "choices": [
+   "ซิลเวอร์ออกไซด์",
+   "กลูโคสออกซิเดส",
+   "สารสกัดใบแป๊ะก๊วย น้ำมันทีทรี ว่านหางจระเข้",
+   "นาโนเคลย์"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ใช้ในเสื้อนาโนกลุ่มปกป้องสุขภาพ",
+   "ผิด — ใช้ในเสื้อคุมเบาหวาน",
+   "ถูก — กลุ่มบำรุงผิวใช้ใบแป๊ะก๊วย ทีทรี ว่านหางจระเข้ วิตามิน สารหอม",
+   "ผิด — ใช้กันการซึมผ่านของแก๊ส"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ความสัมพันธ์ของ Fiber, Yarn, Fabric เรียงจากเล็กไปใหญ่ข้อใดถูก?",
+  "choices": [
+   "Fiber → Fabric → Yarn",
+   "Yarn → Fiber → Fabric",
+   "Fabric → Yarn → Fiber",
+   "Fiber → Yarn → Fabric"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ต้องเป็นด้ายก่อนเป็นผ้า",
+   "ผิด — Fiber เป็นหน่วยเล็กสุด",
+   "ผิด — กลับด้าน",
+   "ถูก — เส้นใยปั่นเป็นเส้นด้าย แล้วทอ/ถักเป็นผืนผ้า"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "เส้นใยจากสัตว์ (ขนแกะ ไหม) มีสมบัติทั่วไปคล้ายโปรตีนอย่างไร?",
+  "choices": [
+   "เปียกน้ำแล้วเหนียวและแข็งแรงขึ้น",
+   "ทนแดดได้ดีกว่าฝ้าย",
+   "เปียกน้ำแล้วความเหนียวและแข็งแรงลดลง ถูกแดดนานจะสลายหรือกรอบ",
+   "ติดไฟง่ายและไม่มีกลิ่น"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — กลับกัน ความแข็งแรงลดลงเมื่อเปียก",
+   "ผิด — แดดนานทำให้กรอบ",
+   "ถูก — ตรงกับสไลด์: เปียกน้ำแล้วอ่อนลง แดดนานจะสลาย/กรอบ",
+   "ผิด — ขนสัตว์ติดไฟยาก และมีกลิ่นเหม็นเมื่อไหม้"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมขนสัตว์จึงเหมาะกับอากาศหนาว ส่วนฝ้ายเหมาะกับเมืองร้อน?",
+  "choices": [
+   "ขนสัตว์ราคาถูกกว่าฝ้าย",
+   "ขนสัตว์ดูดซับน้ำได้ดีที่สุด",
+   "ฝ้ายทำจากโปรตีน",
+   "ขนสัตว์นำความร้อนเลว ส่วนฝ้ายนำความร้อนดี"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ขนสัตว์ราคาแพงกว่า",
+   "ผิด — ไม่ใช่เหตุผลในตารางเปรียบเทียบ",
+   "ผิด — ฝ้ายเป็นเซลลูโลส",
+   "ถูก — ขนสัตว์นำความร้อนเลว (มีเกล็ดกักอากาศ) เก็บความอุ่น ฝ้ายนำความร้อนดี ระบายร้อน"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ข้อใดเปรียบเทียบขนสัตว์กับฝ้าย/ลินินต่อกรด-ด่างได้ถูกต้อง?",
+  "choices": [
+   "ทั้งคู่ไม่ทนทั้งกรดและด่าง",
+   "ทั้งคู่ทนกรดและด่างได้ดี",
+   "ขนสัตว์ทนด่าง ฝ้ายทนกรด",
+   "ขนสัตว์ทนกรด แต่ถูกด่างคุณสมบัติเปลี่ยน / ฝ้ายถูกด่างไม่เป็นอันตราย แต่ถูกกรดอันตราย"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — แต่ละชนิดทนได้อย่างใดอย่างหนึ่ง",
+   "ผิด — ต่างกันตามชนิดสาร (โปรตีน vs เซลลูโลส)",
+   "ผิด — สลับกัน",
+   "ถูก — ตรงกับตารางเปรียบเทียบในสไลด์"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ตามตารางวิเคราะห์ ข้อใดสรุปจุดเด่นของเส้นใยสังเคราะห์ vs ธรรมชาติถูกต้อง?",
+  "choices": [
+   "ธรรมชาติกันรอยยับได้ดีกว่าสังเคราะห์",
+   "สังเคราะห์เด่นด้านทนทานและราคา ธรรมชาติเด่นด้านจัดการความชื้นและเป็นมิตรต่อสิ่งแวดล้อม",
+   "สังเคราะห์เด่นด้านจัดการความชื้น ธรรมชาติเด่นด้านทนทาน",
+   "ทั้งสองแบบย่อยสลายได้ดีเท่ากัน"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — โพลีเอสเตอร์/ไนลอนกันรอยยับดีกว่าฝ้าย",
+   "ถูก — ตรงกับข้อสรุปท้ายตารางในสไลด์",
+   "ผิด — สลับกัน",
+   "ผิด — โพลีเอสเตอร์/ไนลอนย่อยสลายได้น้อย"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "เสื้อผ้าควบคุมเบาหวานชนิดที่ 2 ปล่อยยาออกมาได้อย่างไร?",
+  "choices": [
+   "กลูโคสทำปฏิกิริยากับกลูโคสออกซิเดส → pH โพลิเมอร์ลด → โพลิเมอร์พองตัวปล่อยยา",
+   "ผู้สวมใส่กดปุ่มปล่อยยาเอง",
+   "แสงแดดกระตุ้นซิลเวอร์ออกไซด์",
+   "ความร้อนจากร่างกายละลายยาออกมา"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ปฏิกิริยาถูกตรึงบนโพลิเมอร์ ทำให้ pH ลด โพลิเมอร์พองตัวแล้วปล่อยยา Anti-Diabetic Herbal Drug",
+   "ผิด — เป็นกลไกอัตโนมัติ",
+   "ผิด — ซิลเวอร์ออกไซด์ใช้กันแบคทีเรีย/UV",
+   "ผิด — ไม่ใช่กลไกในสไลด์"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ผ้าที่ปรับตามอุณหภูมิร่างกาย (นักวิทยาศาสตร์อังกฤษ) ทำงานอย่างไร?",
+  "choices": [
+   "\"ขน\" บนผ้าเปิดเมื่อร้อนให้อากาศเข้าและปิดเมื่อเย็นลง",
+   "ปล่อยน้ำหอมเมื่อเหงื่อออก",
+   "เปลี่ยนสีเมื่อร้อน",
+   "ผลิตไฟฟ้าจากความร้อน"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ขนเปิดอัตโนมัติเมื่อร้อนให้อากาศผ่าน เย็นลงแล้วปิด",
+   "ผิด — เป็นแนวคิดกลุ่มบำรุงผิว/กลิ่นหอม",
+   "ผิด — เป็นตัวอย่างอื่น (เสื้อตัวอักษรเด่นเมื่อโดนแดด)",
+   "ผิด — ไม่ใช่กลไกในสไลด์"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ข้อใดอธิบายความต่างระหว่าง \"สิ่งทอ (Textiles)\" กับ \"ผ้า (Fabric)\" ได้ถูกต้อง?",
+  "choices": [
+   "ผ้ารวมถึงเส้นด้ายด้วย",
+   "สิ่งทอครอบคลุมทุกผลิตภัณฑ์จากเส้นใยทั้งทอและไม่ทอ ส่วนผ้าคือสิ่งทอที่เป็นผืน",
+   "สิ่งทอเป็นส่วนหนึ่งของผ้า",
+   "ทั้งสองคำหมายถึงเส้นใยดิบ"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — เส้นด้ายไม่ใช่ผ้า",
+   "ถูก — Textiles กว้างกว่า Fabric",
+   "ผิด — กลับกัน ผ้าเป็นส่วนหนึ่งของสิ่งทอ",
+   "ผิด — เส้นใยดิบคือ Fiber"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมไหมจึงมีความเงางามตามธรรมชาติ?",
+  "choices": [
+   "มีเกล็ดรอบนอกกักเก็บอากาศ",
+   "โครงสร้างปริซึมสามเหลี่ยม ผิวเรียบ สะท้อนแสงดี",
+   "รูปทรงเมล็ดถั่วมีช่องว่าง",
+   "ทรงกลมเรียบจากการสังเคราะห์"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — นั่นคือขนแกะ (ฉนวนกันหนาว)",
+   "ถูก — ไหมมีโครงสร้างปริซึมสามเหลี่ยม สะท้อนแสงเงางาม",
+   "ผิด — นั่นคือฝ้าย (ซับน้ำ)",
+   "ผิด — นั่นคือไนลอน"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "การเตรียมโพลิเมอร์ตั้งต้นของเรยอน ต่างจากเส้นใยสังเคราะห์อย่างไร?",
+  "choices": [
+   "เรยอนไม่ต้องเตรียมโพลิเมอร์",
+   "เรยอนย่อยวัตถุดิบธรรมชาติ (เช่น ไม้) เป็นสารละลายเข้มข้น ส่วนใยสังเคราะห์สร้างโพลิเมอร์จากโมโนเมอร์",
+   "เรยอนสังเคราะห์จากโมโนเมอร์ ส่วนใยสังเคราะห์ใช้ไม้",
+   "ทั้งคู่ใช้ขนสัตว์เป็นวัตถุดิบ"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — ต้องเตรียมเป็น polymer viscous",
+   "ถูก — เรยอนใช้วัตถุธรรมชาติที่มีโพลิเมอร์อยู่แล้ว ใยสังเคราะห์ใช้ addition/condensation polymerization",
+   "ผิด — สลับกัน",
+   "ผิด — ไม่ใช้ขนสัตว์"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "เครื่องนุ่งห่มมีบทบาทใดในฐานะปัจจัย 4 ตามสไลด์?",
+  "choices": [
+   "ใช้เป็นที่อยู่อาศัยชั่วคราว",
+   "เป็นแหล่งอาหารและยา",
+   "การปกป้องทางสรีรวิทยา และอัตลักษณ์ทางสังคม",
+   "ใช้รักษาโรค"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ไม่ใช่บทบาทในสไลด์",
+   "ผิด — อาหารและยาเป็นปัจจัยอื่น",
+   "ถูก — ปกป้องร่างกายเหมือนผิวชั้นที่สอง และสื่อสารบทบาท วัฒนธรรม ฐานะ",
+   "ผิด — ไม่ใช่หน้าที่หลัก"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "กราฟเรดาร์ของเส้นใยสังเคราะห์ (โพลีเอสเตอร์ ไนลอน สแปนเด็กซ์) สรุปข้อจำกัดไว้ว่าอย่างไร?",
+  "choices": [
+   "ราคาแพงมาก",
+   "ดูดซับความชื้นได้จำกัด",
+   "ยืดหยุ่นต่ำ",
+   "ทนทานต่ำ"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — สไลด์บอกว่าใยสังเคราะห์เด่นเรื่องราคา",
+   "ถูก — สไลด์สรุปว่ามีข้อจำกัดด้านการดูดซับความชื้น",
+   "ผิด — ยืดหยุ่นสุดยอด (โดยเฉพาะสแปนเด็กซ์)",
+   "ผิด — ใยสังเคราะห์ถูกออกแบบให้ทนทานสูง"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ต้องการเสื้อกีฬาที่ต้านแบคทีเรียลดกลิ่นอับและกันยูวี ควรเลือกเสื้อนาโนที่มีอนุภาคใด?",
+  "choices": [
+   "ไทเทเนียมไดออกไซด์",
+   "นาโนเคลย์",
+   "ลิกนิน",
+   "ซิลเวอร์ออกไซด์"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — TiO₂ ในสไลด์เป็นตัวเร่งสลายสารมลพิษ",
+   "ผิด — นาโนเคลย์กันการซึมผ่านของแก๊ส",
+   "ผิด — ลิกนินเป็นสารในเนื้อไม้",
+   "ถูก — ซิลเวอร์ออกไซด์ยับยั้งแบคทีเรียและป้องกันรังสี UV"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ป้ายเสื้อมีรูปเตารีดที่มี 1 จุด ควรรีดอย่างไร?",
+  "choices": [
+   "รีดด้วยความร้อนต่ำ",
+   "ห้ามรีด",
+   "รีดด้วยไอน้ำเท่านั้น",
+   "รีดด้วยความร้อนสูง"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — จำนวนจุดบอกอุณหภูมิ 1 จุด = ต่ำ",
+   "ผิด — ห้ามรีดจะมีกากบาททับเตารีด",
+   "ผิด — จุดไม่ได้บอกเรื่องไอน้ำ",
+   "ผิด — ความร้อนสูงคือ 3 จุด"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ป้ายสูทมีรูปวงกลมที่มีกากบาททับ ควรทำความสะอาดอย่างไร?",
+  "choices": [
+   "ห้ามตากแดด",
+   "ส่งซักแห้งเท่านั้น",
+   "ห้ามซักแห้ง",
+   "ห้ามใช้น้ำยาฟอกขาว"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — การตากใช้สัญลักษณ์สี่เหลี่ยม",
+   "ผิด — วงกลมเปล่าคือซักแห้งได้",
+   "ถูก — วงกลม = ซักแห้ง, มีกากบาท = ห้ามซักแห้ง",
+   "ผิด — น้ำยาฟอกขาวใช้สามเหลี่ยม"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "เผลอเอาเสื้อขนสัตว์ไปแช่ในน้ำยาที่เป็นด่างแรง น่าจะเกิดผลใด?",
+  "choices": [
+   "คุณสมบัติของเส้นใยเปลี่ยนไป เพราะขนสัตว์ไม่ทนด่าง",
+   "ไม่มีผล เพราะขนสัตว์ทนด่าง",
+   "เส้นใยแข็งแรงขึ้น",
+   "เส้นใยกลายเป็นเซลลูโลส"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ตามตาราง ขนสัตว์ถูกด่างจะมีคุณสมบัติเปลี่ยนไป",
+   "ผิด — ขนสัตว์ทนต่อกรด ไม่ใช่ด่าง",
+   "ผิด — ขัดกับตารางเปรียบเทียบ",
+   "ผิด — ขนสัตว์เป็นโปรตีน ไม่เปลี่ยนเป็นเซลลูโลส"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ต้องการเลือกผ้าใส่ในเมืองร้อนที่ระบายอากาศดีและย่อยสลายได้ ตามตารางวิเคราะห์ควรเลือกข้อใด?",
+  "choices": [
+   "ไนลอน",
+   "โพลีเอสเตอร์",
+   "ขนสัตว์",
+   "ฝ้าย"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ระบายอากาศน้อยและย่อยสลายยาก",
+   "ผิด — ระบายอากาศน้อยและย่อยสลายยาก",
+   "ผิด — ขนสัตว์กักเก็บความร้อนสูง เหมาะอากาศหนาว",
+   "ถูก — ฝ้ายระบายอากาศดีมาก ย่อยสลายได้ และนำความร้อนดีเหมาะเมืองร้อน"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ตามข้อควรพิจารณาในการเลือกซื้อเสื้อผ้า ข้อใดเป็นพฤติกรรมที่ถูกต้อง?",
+  "choices": [
+   "ตรวจเสื้อผ้าที่มีอยู่ก่อน ซื้อเฉพาะที่จำเป็น และเทียบหลายร้าน",
+   "ซื้อทุกครั้งที่ลดราคาแม้ไม่จำเป็น",
+   "เลือกแบบที่ฉูดฉาดที่สุดเสมอ",
+   "ซื้อในร้านแรกที่เห็นทันที"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ตรงกับข้อ 1, 2 และ 6 ของข้อควรพิจารณา",
+   "ผิด — ขัดกับข้อ 'ซื้อเฉพาะที่จำเป็น'",
+   "ผิด — สไลด์แนะนำให้เลือกแบบเรียบ ๆ",
+   "ผิด — ควรดูหลายร้านเพื่อเปรียบเทียบ"
+  ]
+ }
+];
+
+let current = 0;
+const answered = new Array(questions.length).fill(null); // currently displayed choice per question
+const firstChoices = new Array(questions.length).fill(null); // choice used for scoring (first click only)
+
+function buildJumpGrid() {
+  const grid = document.getElementById('jumpGrid');
+  let html = '';
+  questions.forEach((q, i) => {
+    html += '<button data-i="' + i + '" onclick="jumpTo(' + i + ')">' + (i+1) + '</button>';
+  });
+  grid.innerHTML = html;
+  updateJumpGrid();
+}
+
+function updateJumpGrid() {
+  const grid = document.getElementById('jumpGrid');
+  Array.from(grid.children).forEach((btn, i) => {
+    btn.className = '';
+    if (i === current && current < questions.length) btn.classList.add('current');
+    if (firstChoices[i] !== null) {
+      btn.classList.add(firstChoices[i] === questions[i].correct ? 'done-correct' : 'done-wrong');
+    }
+  });
+}
+
+function jumpTo(i) {
+  current = i;
+  render();
+}
+
+function render() {
+  const area = document.getElementById('quizArea');
+  updateJumpGrid();
+  if (current >= questions.length) {
+    renderScore();
+    return;
+  }
+  const qd = questions[current];
+  const chosen = answered[current];
+
+  let html = '<div class="card">';
+  html += '<div class="progress-row">';
+  html += '<div class="progress">ข้อ ' + (current+1) + ' / ' + questions.length + '</div>';
+  html += '<div class="tag ' + qd.type + '">' + TAG_LABEL[qd.type] + '</div>';
+  html += '</div>';
+  html += '<div class="question">' + qd.q + '</div>';
+
+  qd.choices.forEach((c, i) => {
+    let cls = 'choice';
+    if (chosen !== null) {
+      if (i === qd.correct) cls += ' correct';
+      else if (i === chosen) cls += ' wrong';
+    }
+    html += '<button class="' + cls + '" onclick="selectChoice(' + i + ')">' + String.fromCharCode(3585+i) + '. ' + c + '</button>';
+    if (chosen !== null && i === chosen) {
+      const bgCls = (i === qd.correct) ? 'correct-bg' : 'wrong-bg';
+      html += '<div class="explain ' + bgCls + '">' + qd.explain[i] + '</div>';
+    }
+  });
+
+  html += '<div class="nav">';
+  html += '<button class="nav-btn" onclick="prevQ()" ' + (current===0?'disabled':'') + '>ก่อนหน้า</button>';
+  html += '<button class="nav-btn" onclick="nextQ()">' + (current===questions.length-1 ? 'ดูสรุปคะแนน' : 'ถัดไป') + '</button>';
+  html += '</div>';
+  html += '</div>';
+
+  area.innerHTML = html;
+}
+
+function selectChoice(i) {
+  if (firstChoices[current] === null) {
+    firstChoices[current] = i;
+  }
+  answered[current] = i;
+  render();
+}
+
+function nextQ() {
+  if (current < questions.length - 1) {
+    current++;
+  } else {
+    current = questions.length; // trigger score screen
+  }
+  render();
+}
+
+function prevQ() {
+  if (current > 0) current--;
+  render();
+}
+
+function renderScore() {
+  const score = firstChoices.reduce((acc, val, idx) => {
+    return (val !== null && val === questions[idx].correct) ? acc + 1 : acc;
+  }, 0);
+
+  const byType = { recall: [0,0], understand: [0,0], apply: [0,0] };
+  questions.forEach((qd, idx) => {
+    byType[qd.type][1]++;
+    if (firstChoices[idx] !== null && firstChoices[idx] === qd.correct) byType[qd.type][0]++;
+  });
+
+  const area = document.getElementById('quizArea');
+  let html = '<div class="card score-box">';
+  html += '<div>คุณทำแบบทดสอบเสร็จแล้ว</div>';
+  html += '<div class="big">' + score + ' / ' + questions.length + '</div>';
+  html += '<div class="breakdown">';
+  html += '<div><span>ความจำ</span><span>' + byType.recall[0] + ' / ' + byType.recall[1] + '</span></div>';
+  html += '<div><span>ความเข้าใจ</span><span>' + byType.understand[0] + ' / ' + byType.understand[1] + '</span></div>';
+  html += '<div><span>การนำไปใช้</span><span>' + byType.apply[0] + ' / ' + byType.apply[1] + '</span></div>';
+  html += '</div>';
+  html += '<button id="restartBtn" onclick="restart()">ทำใหม่อีกครั้ง</button>';
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function restart() {
+  current = 0;
+  for (let i = 0; i < questions.length; i++) {
+    answered[i] = null;
+    firstChoices[i] = null;
+  }
+  render();
+}
+
+buildJumpGrid();
+render();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Quiz: บทที่ 5 เครื่องสำอาง</title>
+<style>
+  body {
+    font-family: "Segoe UI", "Tahoma", sans-serif;
+    background: #f5f6fa;
+    color: #1a1a1a;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+    line-height: 1.6;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .sub { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+  }
+  .progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .progress { color: #888; font-size: 0.9rem; }
+  .tag {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .tag.recall { background: #e8eaf6; color: #3f51b5; }
+  .tag.understand { background: #fff3e0; color: #ef6c00; }
+  .tag.apply { background: #e0f2f1; color: #00796b; }
+  .question { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; }
+  .choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #1a1a1a;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .choice:hover { background: #f0f0f0; }
+  .choice.correct { background: #e3f7e8; border-color: #4caf50; }
+  .choice.wrong { background: #fdeaea; border-color: #e57373; }
+  .explain {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  .explain.correct-bg { background: #e3f7e8; border: 1px solid #4caf50; }
+  .explain.wrong-bg { background: #fdeaea; border: 1px solid #e57373; }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  button.nav-btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    background: #3f51b5;
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  button.nav-btn:disabled { background: #bbb; cursor: not-allowed; }
+  .score-box {
+    text-align: center;
+    padding: 24px;
+  }
+  .score-box .big { font-size: 2rem; font-weight: 700; margin: 12px 0; }
+  .breakdown {
+    text-align: left;
+    max-width: 320px;
+    margin: 16px auto 0;
+    font-size: 0.95rem;
+  }
+  .breakdown div { display: flex; justify-content: space-between; padding: 4px 0; }
+  #restartBtn {
+    margin-top: 12px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #3f51b5;
+    color: #fff;
+    cursor: pointer;
+  }
+  .jumpgrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .jumpgrid button {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .jumpgrid button.current { border-color: #3f51b5; font-weight: 700; }
+  .jumpgrid button.done-correct { background: #e3f7e8; border-color: #4caf50; }
+  .jumpgrid button.done-wrong { background: #fdeaea; border-color: #e57373; }
+</style>
+</head>
+<body>
+
+<h1>Quiz: บทที่ 5 เครื่องสำอาง</h1>
+<div class="sub">30 ข้อ แบ่งเป็นความจำ 12 ข้อ ความเข้าใจ 12 ข้อ และการนำไปใช้ 6 ข้อ — กดเลือกคำตอบแต่ละข้อ จะเห็นเหตุผลทันที คะแนนนับจากการกดครั้งแรกของแต่ละข้อเท่านั้น</div>
+
+<div class="jumpgrid" id="jumpGrid"></div>
+<div id="quizArea"></div>
+
+<script>
+const TAG_LABEL = { recall: "ความจำ", understand: "ความเข้าใจ", apply: "การนำไปใช้" };
+
+const questions = [
+ {
+  "type": "recall",
+  "q": "ผิวหนังชั้นใดมีคอลลาเจนเป็นส่วนประกอบใหญ่?",
+  "choices": [
+   "ชั้นใต้ผิวหนัง",
+   "ชั้นเคลือบเหงื่อและไขมัน",
+   "หนังกำพร้า",
+   "หนังแท้"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ชั้นใต้ผิวหนังเป็นไฟเบอร์และไขมัน",
+   "ผิด — เหงื่อและไขมันเคลือบอยู่บนหนังกำพร้า ไม่ใช่ชั้นที่มีคอลลาเจน",
+   "ผิด — หนังกำพร้าเด่นเรื่องผิวเป็นกรดอ่อน ๆ กันเชื้อโรค",
+   "ถูก — หนังแท้มีคอลลาเจน (เส้นใยโปรตีนเรียงขนาน) เป็นส่วนประกอบใหญ่"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ข้อใดเป็นเครื่องสำอางควบคุมพิเศษทั้งหมด?",
+  "choices": [
+   "แป้งฝุ่นโรยตัว แป้งน้ำ",
+   "ยาสีฟัน น้ำยาย้อมผม",
+   "ผ้าอนามัย ผ้าเย็น",
+   "ลิปสติก ครีมรองพื้น"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — แป้งฝุ่นโรยตัว/แป้งน้ำเป็นเครื่องสำอางควบคุม",
+   "ถูก — ควบคุมพิเศษ: ยาสีฟัน น้ำยาบ้วนปาก น้ำยาย้อมผม ฟอกสีผม ทำให้ผมดำ",
+   "ผิด — ผ้าอนามัย ผ้าเย็น เป็นเครื่องสำอางควบคุม",
+   "ผิด — ลิปสติก รองพื้น เป็นเครื่องสำอางทั่วไป"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "รังสี UV ชนิดใดลอดผ่านกระจกและเมฆได้ และทำให้เกิดริ้วรอยเหี่ยวย่น?",
+  "choices": [
+   "UVC",
+   "UVB",
+   "UVA",
+   "อินฟราเรด"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — UVC ถูกชั้นบรรยากาศกรองไว้",
+   "ผิด — UVB ทำให้ผิวไหม้และทำลาย DNA",
+   "ถูก — UVA คลื่นยาว พลังงานต่ำ ผ่านกระจก/เมฆ ทำให้แก่ เหี่ยวย่น ผิวแทน",
+   "ผิด — อินฟราเรดไม่ใช่รังสี UV"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "สารกันแดดประเภท physical ได้แก่ข้อใด?",
+  "choices": [
+   "PABA และ benzophenone",
+   "PABA ester และ cinnamates",
+   "titanium dioxide และ zinc oxide",
+   "cinnamates และ salicylates"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — PABA, benzophenone เป็นประเภท chemical (ดูดซับ UV)",
+   "ผิด — ทั้งคู่เป็นประเภท chemical",
+   "ถูก — physical เป็นสารทึบแสง ดูดซับและสะท้อน UV ได้แก่ titanium dioxide, zinc oxide",
+   "ผิด — cinnamates, salicylates เป็นประเภท chemical"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "สารห้ามใช้ชนิดใดอาจทำให้ทารกในครรภ์พิการ?",
+  "choices": [
+   "ไฮโดรควิโนน",
+   "สเตียรอยด์",
+   "กรดวิตามินเอ (Tretinoin)",
+   "ปรอทแอมโมเนีย"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ไฮโดรควิโนนทำให้จุดด่างขาว ฝ้าถาวร",
+   "ผิด — สเตียรอยด์ทำให้ผิวบาง สิว คุมน้ำตาลไม่ได้",
+   "ถูก — กรดวิตามินเอ อันตรายต่อทารกในครรภ์ ทำให้พิการ",
+   "ผิด — ปรอทสะสมทำให้ทางเดินปัสสาวะและไตอักเสบ"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "การทดสอบการแพ้เครื่องสำอางก่อนใช้ครั้งแรก ควรทำอย่างไร?",
+  "choices": [
+   "ทาที่ท้องแขนทิ้งไว้ 24–48 ชั่วโมง",
+   "ทาที่ฝ่ามือแล้วล้างออกทันที",
+   "ทาที่รอบดวงตาทิ้งไว้ 12 ชั่วโมง",
+   "ทาที่ใบหน้าทิ้งไว้ 1 ชั่วโมง"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ทาเล็กน้อยที่ท้องแขน ทิ้งไว้ 24–48 ชม. ถ้าไม่ผิดปกติจึงใช้ได้",
+   "ผิด — ล้างทันทีจะไม่เห็นอาการแพ้",
+   "ผิด — รอบดวงตาบอบบางที่สุด ไม่ควรใช้ทดสอบ",
+   "ผิด — ใบหน้าบอบบาง และเวลาสั้นเกินไป"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "สาร Humectants ต่างจาก Emollient อย่างไร?",
+  "choices": [
+   "Humectants ทำให้เกิดฟอง ส่วน Emollient ฆ่าเชื้อ",
+   "Humectants ติดทนนาน ส่วน Emollient ล้างออกง่าย",
+   "Humectants เป็นน้ำมัน ส่วน Emollient เป็นกรดอ่อน",
+   "Humectants ดึงน้ำเข้าผิว ส่วน Emollient ป้องกันน้ำออกจากผิว"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ทำฟองคือ Surfactant ฆ่าเชื้อคือ Quaternary Ammonium",
+   "ผิด — กลับกัน Humectant ถูกล้างออกจากผิวได้ง่ายมาก",
+   "ผิด — Emollient คือพวกน้ำมัน กรดอ่อนคือ AHA/BHA",
+   "ถูก — Humectant ดึงดูดน้ำเข้าผิว Emollient เป็นฟิล์มกันน้ำออก"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "สารใดทำหน้าที่ตกตะกอนโปรตีน ทำให้ผิวรู้สึกตึงกระชับ?",
+  "choices": [
+   "Surfactant",
+   "Silicone-based oil",
+   "Preservative",
+   "Astringent"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — Surfactant ล้างสิ่งสกปรก ทำฟอง",
+   "ผิด — Silicone oil เคลือบผิวแบบ Emollient สังเคราะห์",
+   "ผิด — Preservative ยับยั้งแบคทีเรีย",
+   "ถูก — Astringent (ฝาดสมาน) ตกตะกอนโปรตีน ผิวสดชื่น กระชับ ตึง สมานแผลเล็ก ๆ"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "สารขจัดรังแคชนิดใดที่ทำให้แชมพูจัดเป็นเครื่องสำอางควบคุม?",
+  "choices": [
+   "ซิงก์ไพริไทโอน",
+   "ไฮโดรควิโนน",
+   "AHA",
+   "ไทเทเนียมไดออกไซด์"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ซิงก์ไพริไทโอน ไพรอกโทนโอลามีน และคลิมบาโซล เป็นสารควบคุม",
+   "ผิด — ไฮโดรควิโนนเป็นสารห้ามใช้",
+   "ผิด — AHA เป็นสารผลัดผิว ไม่ใช่สารขจัดรังแค",
+   "ผิด — TiO₂ เป็นสารกันแดดชนิด physical"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "การเสื่อมของผิวที่เกิดจากพันธุกรรมและแก้ไขไม่ได้เรียกว่าอะไร?",
+  "choices": [
+   "exfoliation",
+   "endogenous skin aging",
+   "photoaging",
+   "sunburn"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — exfoliation คือการผลัดเซลล์ผิว",
+   "ถูก — endogenous skin aging เกิดจากปัจจัยภายใน (พันธุกรรม) แก้ไขไม่ได้",
+   "ผิด — photoaging เกิดจากแสงแดด",
+   "ผิด — sunburn คือผิวไหม้จากแดด"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "สารห้ามใช้ชนิดใดทำให้ทางเดินปัสสาวะและไตอักเสบ?",
+  "choices": [
+   "กรดวิตามินเอ",
+   "ไฮโดรควิโนน",
+   "สเตียรอยด์",
+   "ปรอทแอมโมเนีย"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — กรดวิตามินเอทำให้ทารกพิการ ผิวลอก",
+   "ผิด — ไฮโดรควิโนนทำให้ฝ้าถาวร ด่างขาว",
+   "ผิด — สเตียรอยด์ทำผิวบาง สิว เลือดออกในกระเพาะ",
+   "ถูก — ปรอทแอมโมเนียเกิดพิษสะสม ทางเดินปัสสาวะอักเสบ ไตอักเสบ"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ตาม พ.ร.บ.เครื่องสำอาง พ.ศ. 2535 ข้อใด \"ไม่รวม\" อยู่ในความหมายของเครื่องสำอาง?",
+  "choices": [
+   "เครื่องประทินผิว",
+   "วัตถุที่ใช้เป็นส่วนผสมผลิตเครื่องสำอาง",
+   "เครื่องประดับและเครื่องแต่งตัว",
+   "วัตถุที่กฎกระทรวงกำหนด"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — เครื่องประทินผิวรวมอยู่ในความหมาย",
+   "ผิด — เป็นข้อ (2) ของความหมาย",
+   "ถูก — กฎหมายระบุชัดว่าไม่รวมเครื่องประดับและเครื่องแต่งตัวที่เป็นอุปกรณ์ภายนอก",
+   "ผิด — เป็นข้อ (3) ของความหมาย"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมการฉีดฟิลเลอร์จึงไม่จัดเป็นเครื่องสำอาง?",
+  "choices": [
+   "เพราะมีผลต่อโครงสร้างหรือการทำหน้าที่ของร่างกาย",
+   "เพราะไม่มีฉลากภาษาไทย",
+   "เพราะราคาแพงเกินกว่าเครื่องสำอาง",
+   "เพราะใช้กับผิวหน้าเท่านั้น"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — เครื่องสำอางต้องไม่มีผลต่อโครงสร้าง/การทำหน้าที่ของร่างกาย การฉีดเข้าไปเปลี่ยนโครงสร้างจึงไม่ใช่",
+   "ผิด — ฉลากเป็นเรื่องคุณภาพสินค้า ไม่ใช่เกณฑ์แยกประเภท",
+   "ผิด — ราคาไม่ใช่เกณฑ์ตามกฎหมาย",
+   "ผิด — เครื่องสำอางก็ใช้กับผิวหน้าได้"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมผิวหนังชั้นกำพร้าจึงต้องมีสภาพเป็นกรดอ่อน ๆ?",
+  "choices": [
+   "เพื่อทำให้ผิวขาวขึ้น",
+   "เพื่อต้านทานเชื้อโรค ถ้าผิวเป็นด่างเชื้อโรคแพร่ง่าย",
+   "เพื่อเร่งการผลัดเซลล์ผิว",
+   "เพื่อกักเก็บไขมันใต้ผิว"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — ความเป็นกรดไม่ได้ทำให้ผิวขาว",
+   "ถูก — สไลด์ระบุว่ากรดอ่อน ๆ ช่วยต้านเชื้อโรค ผิวเป็นด่างภูมิต้านทานลดลง",
+   "ผิด — การผลัดเซลล์เป็นหน้าที่ของ AHA/BHA",
+   "ผิด — ไขมันใต้ผิวอยู่ชั้นใต้ผิวหนัง"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ข้อใดเปรียบเทียบ UVA กับ UVB ได้ถูกต้อง?",
+  "choices": [
+   "UVA คลื่นสั้นกว่าและพลังงานสูงกว่า UVB",
+   "UVA คลื่นยาวกว่า พลังงานต่ำกว่า แต่เข้าถึงชั้นผิวลึกกว่า",
+   "UVB ผ่านกระจกได้ดีกว่า UVA",
+   "UVB ทำให้เกิดต้อกระจก ส่วน UVA ทำให้ผิวไหม้"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — กลับกัน UVB คลื่นสั้นพลังงานสูง",
+   "ถูก — UVA คลื่นยาว พลังงานต่ำ แต่ลอดกระจก/เมฆและเข้าถึงชั้นผิวลึก",
+   "ผิด — UVA เป็นตัวที่ลอดผ่านกระจก",
+   "ผิด — สลับกัน UVA เพิ่มความเสี่ยงต้อกระจก UVB ทำผิวไหม้"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ครีมกันแดด SPF 30 หมายความว่าอย่างไร?",
+  "choices": [
+   "ป้องกันผิวแดงได้นานขึ้น 30 เท่าเมื่อเทียบกับไม่ทา",
+   "ต้องทาซ้ำทุก 30 นาที",
+   "กัน UV ได้ 30%",
+   "ใช้ได้ 30 วันหลังเปิดขวด"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — SPF คืออัตราส่วนพลังงาน UV ที่ทำให้ผิวแดงเมื่อทา/ไม่ทา เช่น SPF 10 = 10 เท่า",
+   "ผิด — SPF ไม่ได้บอกความถี่การทาซ้ำ",
+   "ผิด — SPF ไม่ใช่เปอร์เซ็นต์",
+   "ผิด — ไม่เกี่ยวกับอายุผลิตภัณฑ์"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมผู้ใช้ผลิตภัณฑ์ AHA ควรระวังแสงแดดเป็นพิเศษ?",
+  "choices": [
+   "เพราะ AHA เป็นสารห้ามใช้",
+   "เพราะ AHA ทำให้ผิวไวต่อแสงแดดมากขึ้น",
+   "เพราะ AHA ทำให้ผิวหนาขึ้นจนร้อน",
+   "เพราะ AHA ดูดซับ UV ไว้ในผิว"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — AHA ใช้ได้ถูกกฎหมาย ไม่ใช่สารห้ามใช้",
+   "ถูก — สไลด์ระบุว่าผู้ใช้ AHA จะไวต่อแสงแดดมากขึ้น (ผิวใหม่ถูกเปิดออก)",
+   "ผิด — AHA ทำให้ผิวชั้นนอกหลุดลอก ไม่ได้ทำให้หนาขึ้น",
+   "ผิด — ตัวดูดซับ UV คือสารกันแดดชนิด chemical"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "สารทำให้ผิวขาว (Whitening agent) ออกฤทธิ์โดยหลักการใด?",
+  "choices": [
+   "เคลือบผิวด้วยฟิล์มสีขาว",
+   "ยับยั้งเอนไซม์ tyrosinase ในการสร้างเมลานิน",
+   "เพิ่มการไหลเวียนเลือดที่ผิว",
+   "เพิ่มความหนาของหนังกำพร้า"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — นั่นคือการปกปิดแบบแป้ง/รองพื้น ไม่ใช่ whitening agent",
+   "ถูก — รบกวนการสร้างเม็ดสี: ลดเมลาโนไซต์ ยับยั้ง melanosome หรือยับยั้ง tyrosinase",
+   "ผิด — ไม่เกี่ยวกับการไหลเวียนเลือด",
+   "ผิด — ไม่ได้ทำให้ผิวหนาขึ้น"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมเครื่องสำอางควบคุมพิเศษจึงต้องขึ้นทะเบียนตำรับ?",
+  "choices": [
+   "เพราะเป็นสินค้านำเข้าทั้งหมด",
+   "เพราะเป็นยารักษาโรค",
+   "เพราะมีราคาสูง",
+   "เพราะมีความเสี่ยงสูงจากพิษภัยของเคมีภัณฑ์ที่เป็นส่วนผสม"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ผลิตในประเทศก็ต้องขึ้นทะเบียน",
+   "ผิด — ยังเป็นเครื่องสำอาง ไม่ใช่ยา",
+   "ผิด — ราคาไม่ใช่เหตุผล",
+   "ถูก — ควบคุมพิเศษเสี่ยงสูงสุดต่อผู้บริโภค จึงกำกับเข้มงวดที่สุด"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ข้อใดเป็นเหตุผลที่ไม่ควรโรยแป้งฝุ่นลงบนตัวทารกโดยตรง?",
+  "choices": [
+   "ผงแป้งฟุ้งกระจาย ทารกสูดเข้าไปสะสมในปอด",
+   "แป้งทำให้เกิด photoaging",
+   "แป้งมีสเตียรอยด์",
+   "แป้งทำให้ผิวทารกเป็นด่าง"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — เป็นอันตรายจากการใช้ผิดวิธี ผงแป้งเข้าไปสะสมในปอด",
+   "ผิด — photoaging เกิดจากแสงแดด",
+   "ผิด — แป้งฝุ่นทั่วไปไม่ได้มีสเตียรอยด์",
+   "ผิด — สไลด์ไม่ได้กล่าวถึงเรื่องนี้"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ข้อใดเป็นอันตรายจาก \"ตัวผู้บริโภคเอง\" ไม่ใช่จากตัวผลิตภัณฑ์?",
+  "choices": [
+   "เครื่องสำอางเก่าเสื่อมสภาพ",
+   "แพ้น้ำหอมหรือสารกันเสียเฉพาะบุคคล",
+   "สูตรหรือกรรมวิธีผลิตไม่เหมาะสม",
+   "ลักลอบผสมสารห้ามใช้"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — เป็นอันตรายจากตัวผลิตภัณฑ์",
+   "ถูก — การแพ้เฉพาะบุคคลเป็นปัจจัยจากตัวผู้บริโภค (รวมถึงวัย ตำแหน่งผิว ความประมาท)",
+   "ผิด — เป็นอันตรายจากตัวผลิตภัณฑ์",
+   "ผิด — เป็นอันตรายจากตัวผลิตภัณฑ์"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ไขมันชั้นใต้ผิวหนังมีความสำคัญอย่างไร?",
+  "choices": [
+   "ทำให้ผิวเป็นกรดอ่อน ๆ",
+   "สร้างเม็ดสีเมลานิน",
+   "เป็นหมอนรองรับแรงกระเทือนและสร้างส่วนโค้งเว้าของร่างกาย",
+   "เป็นแหล่งผลิตคอลลาเจน"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ความเป็นกรดอยู่ที่หนังกำพร้า",
+   "ผิด — เม็ดสีสร้างจากเมลาโนไซต์",
+   "ถูก — ไขมันใต้ผิวกันแรงกระแทกต่อกระดูก/กล้ามเนื้อ และช่วยสร้างส่วนโค้งเว้า",
+   "ผิด — คอลลาเจนอยู่ในหนังแท้"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ข้อใด \"ไม่ใช่\" ปัจจัยในการเลือกค่า SPF ตามบทเรียน?",
+  "choices": [
+   "ปริมาณรังสีในพื้นที่และฤดูกาล",
+   "ชนิดของผิวหนังผู้ใช้",
+   "ความติดทนเมื่อโดนน้ำ",
+   "ยี่ห้อที่มีชื่อเสียงและราคาแพง"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — เป็นปัจจัยข้อ 2",
+   "ผิด — เป็นปัจจัยข้อ 1",
+   "ผิด — เป็นปัจจัยข้อ 5 (water resistant/proof)",
+   "ถูก — ยี่ห้อหรือราคาไม่อยู่ใน 6 ปัจจัยของสไลด์"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมสารกันเสีย (Preservatives) จึงต้องระวังแม้จะมีประโยชน์?",
+  "choices": [
+   "เพราะทำให้ผลิตภัณฑ์เสื่อมเร็วขึ้น",
+   "เพราะทำให้เกิดมะเร็งผิวหนัง",
+   "เพราะเป็นสารที่ทำให้แพ้ได้ง่ายพอควร",
+   "เพราะเป็นสารควบคุมพิเศษ"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — มันช่วยชะลอการเสื่อมโดยยับยั้งแบคทีเรีย",
+   "ผิด — สไลด์ไม่ได้กล่าวเช่นนั้น",
+   "ถูก — สไลด์ระบุว่าสารกันเสียเป็นสารที่อาจทำให้แพ้ได้ง่ายพอควร",
+   "ผิด — ไม่ได้อยู่ในรายชื่อสารควบคุมพิเศษ"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "เพื่อนซื้อแชมพูที่มีสาร \"คลิมบาโซล\" แชมพูนี้จัดเป็นเครื่องสำอางประเภทใด?",
+  "choices": [
+   "ควบคุมพิเศษ",
+   "ทั่วไป",
+   "ควบคุม",
+   "ไม่ใช่เครื่องสำอาง"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ควบคุมพิเศษคือยาสีฟัน น้ำยาย้อม/ฟอกสีผม ฯลฯ",
+   "ผิด — แชมพูทั่วไปต้องไม่มีสารขจัดรังแค",
+   "ถูก — คลิมบาโซลเป็นสารขจัดรังแคที่กำหนดเป็นสารควบคุม",
+   "ผิด — ยังเป็นเครื่องสำอาง เพราะใช้ภายนอกเพื่อความสะอาด"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "นักเรียนนั่งทำงานริมหน้าต่างกระจกทั้งวัน ควรกังวลรังสีชนิดใดมากที่สุด?",
+  "choices": [
+   "UVA เพราะลอดผ่านกระจกได้",
+   "UVB เพราะผ่านกระจกได้ดีที่สุด",
+   "UVC เพราะพลังงานสูงที่สุด",
+   "ไม่มีรังสีใดผ่านกระจกได้"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — UVA พบในชีวิตประจำวัน ลอดผ่านกระจกและเมฆ ทำให้ผิวแก่ก่อนวัย",
+   "ผิด — UVB พบมากในที่กลางแจ้ง ไม่ใช่ตัวที่เด่นเรื่องผ่านกระจก",
+   "ผิด — UVC ถูกบรรยากาศกรองไว้แล้ว",
+   "ผิด — UVA ผ่านกระจกได้"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ครีมหน้าขาวไม่มีฉลากไทย ใช้แล้วผิวขาวเร็ว แต่ต่อมาเกิดด่างขาวและฝ้าถาวร น่าจะมีสารใด?",
+  "choices": [
+   "AHA",
+   "ไฮโดรควิโนน",
+   "Humectant",
+   "ซิงก์ไพริไทโอน"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — AHA ทำให้ไวต่อแดด แต่ไม่ใช่ฝ้าถาวร",
+   "ถูก — ไฮโดรควิโนนทำให้เกิดจุดด่างขาว ผิวดำเป็นฝ้าถาวร รักษาไม่หาย",
+   "ผิด — Humectant แค่ให้ความชุ่มชื้น",
+   "ผิด — เป็นสารขจัดรังแค"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ครีมบำรุงระบุว่า \"ทาก่อนนอนเท่านั้น\" แต่ผู้ใช้ทาตอนกลางวันแล้วเกิดอาการแพ้ นี่คืออันตรายจากสาเหตุใด?",
+  "choices": [
+   "การแพ้เฉพาะบุคคล",
+   "ตำแหน่งของผิวหนัง",
+   "ตัวผลิตภัณฑ์เสื่อมสภาพ",
+   "การใช้ผิดวิธี (ผิดเวลา)"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — สาเหตุหลักคือใช้ผิดคำแนะนำ",
+   "ผิด — ไม่ได้เกี่ยวกับตำแหน่งผิว",
+   "ผิด — ผลิตภัณฑ์ไม่ได้เสื่อม",
+   "ถูก — ใช้ผิดเวลา ครีมที่ให้ทาก่อนนอนอาจเกิดปฏิกิริยากับแสงแดด"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ผู้ป่วยเบาหวานใช้ครีมผิดกฎหมายนาน ๆ แล้วคุมน้ำตาลไม่ได้ ผิวบาง เห็นเส้นเลือด ครีมน่าจะมีสารใด?",
+  "choices": [
+   "สเตียรอยด์",
+   "ปรอทแอมโมเนีย",
+   "ไฮโดรควิโนน",
+   "กรดวิตามินเอ"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — สเตียรอยด์ทำให้ผิวบาง เห็นเส้นเลือด สิว และผู้ป่วยเบาหวานคุมน้ำตาลไม่ได้",
+   "ผิด — ปรอทเด่นเรื่องไต/ทางเดินปัสสาวะ",
+   "ผิด — ไฮโดรควิโนนเด่นเรื่องฝ้าถาวร",
+   "ผิด — กรดวิตามินเอเด่นเรื่องผิวลอก ทารกพิการ"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ต้องไปเล่นน้ำทะเลกลางแดดทั้งวัน ควรเลือกกันแดดแบบใดตามหลักในบทเรียน?",
+  "choices": [
+   "กันทั้ง UVA และ UVB และเป็นแบบ water resistant/proof",
+   "ไม่ต้องใช้ เพราะน้ำทะเลกรอง UV ได้",
+   "SPF ต่ำ ราคาถูก เพราะจะล้างออกอยู่แล้ว",
+   "SPF สูง กันเฉพาะ UVA และเป็นเนื้อครีมธรรมดา"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ตรงกับปัจจัย: กันทั้ง UVA/UVB และความติดทนเมื่อโดนน้ำ",
+   "ผิด — น้ำไม่ได้ปกป้องผิวจาก UV และกลับทำให้กันแดดหลุด",
+   "ผิด — ที่แดดจัดควรเลือกให้เหมาะกับปริมาณรังสี และต้องทนน้ำ",
+   "ผิด — ควรกันทั้ง UVA และ UVB และต้องติดทนน้ำ"
+  ]
+ }
+];
+
+let current = 0;
+const answered = new Array(questions.length).fill(null); // currently displayed choice per question
+const firstChoices = new Array(questions.length).fill(null); // choice used for scoring (first click only)
+
+function buildJumpGrid() {
+  const grid = document.getElementById('jumpGrid');
+  let html = '';
+  questions.forEach((q, i) => {
+    html += '<button data-i="' + i + '" onclick="jumpTo(' + i + ')">' + (i+1) + '</button>';
+  });
+  grid.innerHTML = html;
+  updateJumpGrid();
+}
+
+function updateJumpGrid() {
+  const grid = document.getElementById('jumpGrid');
+  Array.from(grid.children).forEach((btn, i) => {
+    btn.className = '';
+    if (i === current && current < questions.length) btn.classList.add('current');
+    if (firstChoices[i] !== null) {
+      btn.classList.add(firstChoices[i] === questions[i].correct ? 'done-correct' : 'done-wrong');
+    }
+  });
+}
+
+function jumpTo(i) {
+  current = i;
+  render();
+}
+
+function render() {
+  const area = document.getElementById('quizArea');
+  updateJumpGrid();
+  if (current >= questions.length) {
+    renderScore();
+    return;
+  }
+  const qd = questions[current];
+  const chosen = answered[current];
+
+  let html = '<div class="card">';
+  html += '<div class="progress-row">';
+  html += '<div class="progress">ข้อ ' + (current+1) + ' / ' + questions.length + '</div>';
+  html += '<div class="tag ' + qd.type + '">' + TAG_LABEL[qd.type] + '</div>';
+  html += '</div>';
+  html += '<div class="question">' + qd.q + '</div>';
+
+  qd.choices.forEach((c, i) => {
+    let cls = 'choice';
+    if (chosen !== null) {
+      if (i === qd.correct) cls += ' correct';
+      else if (i === chosen) cls += ' wrong';
+    }
+    html += '<button class="' + cls + '" onclick="selectChoice(' + i + ')">' + String.fromCharCode(3585+i) + '. ' + c + '</button>';
+    if (chosen !== null && i === chosen) {
+      const bgCls = (i === qd.correct) ? 'correct-bg' : 'wrong-bg';
+      html += '<div class="explain ' + bgCls + '">' + qd.explain[i] + '</div>';
+    }
+  });
+
+  html += '<div class="nav">';
+  html += '<button class="nav-btn" onclick="prevQ()" ' + (current===0?'disabled':'') + '>ก่อนหน้า</button>';
+  html += '<button class="nav-btn" onclick="nextQ()">' + (current===questions.length-1 ? 'ดูสรุปคะแนน' : 'ถัดไป') + '</button>';
+  html += '</div>';
+  html += '</div>';
+
+  area.innerHTML = html;
+}
+
+function selectChoice(i) {
+  if (firstChoices[current] === null) {
+    firstChoices[current] = i;
+  }
+  answered[current] = i;
+  render();
+}
+
+function nextQ() {
+  if (current < questions.length - 1) {
+    current++;
+  } else {
+    current = questions.length; // trigger score screen
+  }
+  render();
+}
+
+function prevQ() {
+  if (current > 0) current--;
+  render();
+}
+
+function renderScore() {
+  const score = firstChoices.reduce((acc, val, idx) => {
+    return (val !== null && val === questions[idx].correct) ? acc + 1 : acc;
+  }, 0);
+
+  const byType = { recall: [0,0], understand: [0,0], apply: [0,0] };
+  questions.forEach((qd, idx) => {
+    byType[qd.type][1]++;
+    if (firstChoices[idx] !== null && firstChoices[idx] === qd.correct) byType[qd.type][0]++;
+  });
+
+  const area = document.getElementById('quizArea');
+  let html = '<div class="card score-box">';
+  html += '<div>คุณทำแบบทดสอบเสร็จแล้ว</div>';
+  html += '<div class="big">' + score + ' / ' + questions.length + '</div>';
+  html += '<div class="breakdown">';
+  html += '<div><span>ความจำ</span><span>' + byType.recall[0] + ' / ' + byType.recall[1] + '</span></div>';
+  html += '<div><span>ความเข้าใจ</span><span>' + byType.understand[0] + ' / ' + byType.understand[1] + '</span></div>';
+  html += '<div><span>การนำไปใช้</span><span>' + byType.apply[0] + ' / ' + byType.apply[1] + '</span></div>';
+  html += '</div>';
+  html += '<button id="restartBtn" onclick="restart()">ทำใหม่อีกครั้ง</button>';
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function restart() {
+  current = 0;
+  for (let i = 0; i < questions.length; i++) {
+    answered[i] = null;
+    firstChoices[i] = null;
+  }
+  render();
+}
+
+buildJumpGrid();
+render();
+</script>
+
+</body>
+</html>

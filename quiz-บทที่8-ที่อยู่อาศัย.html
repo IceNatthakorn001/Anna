@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Quiz: บทที่ 8 ที่อยู่อาศัย</title>
+<style>
+  body {
+    font-family: "Segoe UI", "Tahoma", sans-serif;
+    background: #f5f6fa;
+    color: #1a1a1a;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+    line-height: 1.6;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .sub { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+  }
+  .progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .progress { color: #888; font-size: 0.9rem; }
+  .tag {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .tag.recall { background: #e8eaf6; color: #3f51b5; }
+  .tag.understand { background: #fff3e0; color: #ef6c00; }
+  .tag.apply { background: #e0f2f1; color: #00796b; }
+  .question { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; }
+  .choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #1a1a1a;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .choice:hover { background: #f0f0f0; }
+  .choice.correct { background: #e3f7e8; border-color: #4caf50; }
+  .choice.wrong { background: #fdeaea; border-color: #e57373; }
+  .explain {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  .explain.correct-bg { background: #e3f7e8; border: 1px solid #4caf50; }
+  .explain.wrong-bg { background: #fdeaea; border: 1px solid #e57373; }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  button.nav-btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    background: #3f51b5;
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  button.nav-btn:disabled { background: #bbb; cursor: not-allowed; }
+  .score-box {
+    text-align: center;
+    padding: 24px;
+  }
+  .score-box .big { font-size: 2rem; font-weight: 700; margin: 12px 0; }
+  .breakdown {
+    text-align: left;
+    max-width: 320px;
+    margin: 16px auto 0;
+    font-size: 0.95rem;
+  }
+  .breakdown div { display: flex; justify-content: space-between; padding: 4px 0; }
+  #restartBtn {
+    margin-top: 12px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #3f51b5;
+    color: #fff;
+    cursor: pointer;
+  }
+  .jumpgrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .jumpgrid button {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .jumpgrid button.current { border-color: #3f51b5; font-weight: 700; }
+  .jumpgrid button.done-correct { background: #e3f7e8; border-color: #4caf50; }
+  .jumpgrid button.done-wrong { background: #fdeaea; border-color: #e57373; }
+</style>
+</head>
+<body>
+
+<h1>Quiz: บทที่ 8 ที่อยู่อาศัย</h1>
+<div class="sub">30 ข้อ แบ่งเป็นความจำ 12 ข้อ ความเข้าใจ 12 ข้อ และการนำไปใช้ 6 ข้อ — กดเลือกคำตอบแต่ละข้อ จะเห็นเหตุผลทันที คะแนนนับจากการกดครั้งแรกของแต่ละข้อเท่านั้น</div>
+
+<div class="jumpgrid" id="jumpGrid"></div>
+<div id="quizArea"></div>
+
+<script>
+const TAG_LABEL = { recall: "ความจำ", understand: "ความเข้าใจ", apply: "การนำไปใช้" };
+
+const questions = [
+ {
+  "type": "recall",
+  "q": "Eco Design คือการออกแบบที่ผนวกแนวคิดด้านใดเข้าด้วยกัน?",
+  "choices": [
+   "เศรษฐศาสตร์และนิเวศวิทยา",
+   "การเมืองและสังคม",
+   "เคมีและฟิสิกส์",
+   "วิศวกรรมและศิลปะ"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — Economic + Ecological เพื่อลดผลกระทบตลอดวงจรชีวิตผลิตภัณฑ์",
+   "ผิด — ไม่ใช่นิยามในสไลด์",
+   "ผิด — ไม่ใช่นิยามในสไลด์",
+   "ผิด — ไม่ใช่นิยามในสไลด์"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "หลัก 4R ประกอบด้วยข้อใด?",
+  "choices": [
+   "Refuse, Reduce, Reuse, Recycle",
+   "Reduce, Reuse, Recycle, Return",
+   "Reduce, Reuse, Recycle, Repair",
+   "Repair, Replace, Return, Reuse"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ไม่มี Refuse ในสไลด์",
+   "ผิด — ไม่มี Return",
+   "ถูก — ลดของเสีย ใช้ซ้ำ นำกลับมาใช้ใหม่ ซ่อมบำรุง",
+   "ผิด — ไม่มี Replace/Return"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ที่อยู่อาศัยเป็น 1 ในตัวชี้วัดคุณภาพชีวิตของ UN (1990) ทั้งหมดกี่ตัว?",
+  "choices": [
+   "5 ตัว",
+   "4 ตัว",
+   "12 ตัว",
+   "9 ตัว"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ไม่ตรงกับสไลด์",
+   "ผิด — 4 คือปัจจัย 4",
+   "ผิด — ไม่ตรงกับสไลด์",
+   "ถูก — 1 ใน 9 ตัวชี้วัดคุณภาพชีวิต ภูมิภาคเอเชียและแปซิฟิก"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "การถ่ายเทความร้อนที่เกิดในของเหลวหรือก๊าซที่ความหนาแน่นต่างกันจนเกิดการเคลื่อนไหว เรียกว่าอะไร?",
+  "choices": [
+   "การนำความร้อน",
+   "การแผ่รังสีความร้อน",
+   "การพาความร้อน",
+   "การสะท้อนความร้อน"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — การนำเกิดจากวัตถุสัมผัสกัน",
+   "ผิด — การแผ่รังสีเป็นคลื่น ไม่ต้องมีการไหลของตัวกลาง",
+   "ถูก — Convection เกิดในของเหลว/ก๊าซ การเคลื่อนไหวพาความร้อนไป",
+   "ผิด — ไม่ใช่ 1 ใน 3 หลักการถ่ายเทความร้อน"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "วัสดุกันความร้อน (insulation) 3 ประเภท ไม่รวมข้อใด?",
+  "choices": [
+   "แผ่นยืดหยุ่นได้ (blanket)",
+   "ชนิดฉาบเสริม (insulating fills)",
+   "ชนิดกระจกใส (clear glass)",
+   "แผ่นแท่งก้อน (rigid)"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — เป็นประเภทที่ 2",
+   "ผิด — เป็นประเภทที่ 3",
+   "ถูก — กระจกใสไม่ใช่วัสดุกันความร้อน (U-value สูง)",
+   "ผิด — เป็นประเภทที่ 1"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ปูนซีเมนต์ผสมน้ำแล้วเกิดปฏิกิริยาเคมีที่เรียกว่าอะไร?",
+  "choices": [
+   "การเผาไหม้",
+   "โพลิเมอไรเซชัน",
+   "ไฮเดรชั่น",
+   "ออกซิเดชัน"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ไม่ใช่ปฏิกิริยาของปูนกับน้ำ",
+   "ผิด — เป็นปฏิกิริยาสร้างโพลิเมอร์/พลาสติก",
+   "ถูก — ปฏิกิริยาไฮเดรชั่น ทำให้ยึดอนุภาคของแข็งรวมกัน",
+   "ผิด — ออกซิเดชันเกี่ยวกับสนิมเหล็ก"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ไม้ประกอบด้วยสารสำคัญ 2 ชนิดคือข้อใด?",
+  "choices": [
+   "โพลิเอสเตอร์และไนลอน",
+   "เซลลูโลสและลิกนิน",
+   "คอลลาเจนและเคราติน",
+   "ปูนซีเมนต์และทราย"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — เป็นเส้นใยสังเคราะห์",
+   "ถูก — เซลลูโลส (~60% ผนังเสี้ยนไม้) และลิกนิน",
+   "ผิด — เป็นโปรตีนในร่างกายสัตว์",
+   "ผิด — เป็นส่วนผสมคอนกรีต"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ท่อพลาสติกชนิดใดนิยมใช้เดินท่อน้ำร้อน เพราะต้านความร้อนได้มากกว่าปกติ?",
+  "choices": [
+   "SR",
+   "ABS",
+   "PVC",
+   "CPVC"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — SR ใช้งานใต้ดิน บ่อเกรอะ",
+   "ผิด — ABS ใช้ท่อระบายน้ำเสียและท่ออากาศ",
+   "ผิด — PVC นิยมเดินท่อน้ำจ่ายเข้าอาคาร",
+   "ถูก — CPVC ต้านความร้อนและแรงดันได้มากกว่าปกติ ใช้ท่อน้ำร้อน/สารเคมี"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "วิธีป้องกันสนิมเหล็ก 3 วิธีใหญ่ ไม่รวมข้อใด?",
+  "choices": [
+   "ใช้กระแสไฟฟ้าให้เหล็กมีศักย์สูงกว่ารอบ ๆ",
+   "แช่เหล็กในน้ำเกลือ",
+   "การเคลือบผิว เช่น ทาสีกันสนิม",
+   "ทำเหล็กกล้าไร้สนิมด้วยนิกเกิล/โครเมียม"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — เป็นวิธีที่ 3",
+   "ถูก — น้ำเกลือยิ่งเร่งการเกิดสนิม",
+   "ผิด — เป็นวิธีที่ 1",
+   "ผิด — เป็นวิธีที่ 2"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ปัจจัยภายนอกต่อการออกแบบอาคาร (กระทรวงพลังงาน) มี 4 ข้อ คือข้อใด?",
+  "choices": [
+   "ราคาที่ดิน ถนน ตลาด โรงเรียน",
+   "ผนังทึบ หลังคา กระจก แอร์",
+   "ทิศทางแสงแดด พืชพันธุ์ธรรมชาติ สภาพภูมิประเทศ สภาพภูมิอากาศ",
+   "ปูน อิฐ ไม้ เหล็ก"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ไม่ใช่เนื้อหาในสไลด์",
+   "ผิด — เป็นปัจจัยภายใน",
+   "ถูก — 4 ปัจจัยภายนอกตามสไลด์",
+   "ผิด — เป็นวัสดุก่อสร้าง"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "กระจกชนิดใดในสไลด์มีค่า SHGC และ U-value ต่ำที่สุด?",
+  "choices": [
+   "กระจกใส",
+   "กระจกเขียวตัดแสง",
+   "กระจกฝ้า",
+   "กระจก Low-E"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — กระจกใส U 1.25, SHGC 0.76 สูงสุด",
+   "ผิด — U 0.49, SHGC 0.46",
+   "ผิด — ไม่มีในสไลด์",
+   "ถูก — Low-E U 0.32, SHGC 0.30 ต่ำที่สุด"
+  ]
+ },
+ {
+  "type": "recall",
+  "q": "ปูนรักษ์โลก (Geopolymer & Low-CO₂) ใช้วัสดุทดแทนหินปูนชนิดใด?",
+  "choices": [
+   "เถ้าลอย (Fly Ash) และตะกรัน (Slag)",
+   "พลาสติกรีไซเคิล",
+   "ทรายและกรวด",
+   "ผงไม้"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ใช้เถ้าลอยและตะกรัน ไม่ต้องเผาร้อนสูง ลด CO₂ ได้สูงสุด 80%",
+   "ผิด — ใช้ใน WPC",
+   "ผิด — เป็นส่วนผสมคอนกรีตทั่วไป",
+   "ผิด — ใช้ใน WPC"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "กระแสลมในที่อยู่อาศัยเกิดจากสาเหตุใด?",
+  "choices": [
+   "สีของผนังอาคาร",
+   "ความแตกต่างของความกดอากาศหรืออุณหภูมิ",
+   "จำนวนคนในบ้าน",
+   "ขนาดประตูเพียงอย่างเดียว"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — สีผนังเกี่ยวกับการดูดกลืนรังสี",
+   "ถูก — ลมเคลื่อนจากความกดอากาศสูง/อุณหภูมิต่ำ ไปความกดอากาศต่ำ/อุณหภูมิสูง",
+   "ผิด — ไม่ใช่สาเหตุของกระแสลม",
+   "ผิด — ช่องเปิดมีผลต่อการกระจายลม แต่ไม่ใช่สาเหตุการเกิดลม"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "การนำความร้อน (conduction) ต่างจากการแผ่รังสีความร้อน (radiation) อย่างไร?",
+  "choices": [
+   "การนำไม่ต้องมีตัวกลาง การแผ่รังสีต้องสัมผัส",
+   "การนำต้องมีวัตถุสัมผัสกัน ส่วนการแผ่รังสีส่งเป็นคลื่นผ่านอากาศได้",
+   "การนำเกิดเฉพาะในก๊าซ การแผ่รังสีเกิดเฉพาะในของแข็ง",
+   "ไม่ต่างกัน"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — สลับกัน",
+   "ถูก — นำ = ไหลผ่านวัตถุที่สัมผัสกัน · แผ่รังสี = ส่งเป็นคลื่นไปสู่วัตถุอื่น",
+   "ผิด — การพาต่างหากที่เกิดในของเหลว/ก๊าซ",
+   "ผิด — กลไกต่างกันชัดเจน"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมจึงควรให้ด้านแคบของอาคารหันไปทางทิศตะวันออก–ตะวันตก?",
+  "choices": [
+   "เพื่อให้ด้านที่มีพื้นที่ผนังน้อยรับความร้อนจากแดด โดยเฉพาะช่วงบ่าย",
+   "เพื่อรับลมมรสุมมากที่สุด",
+   "เพื่อให้ได้แสงสว่างมากที่สุด",
+   "เพื่อความสวยงาม"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ลดความร้อนเข้าอาคาร และลดค่าไฟแอร์",
+   "ผิด — เหตุผลในสไลด์คือเรื่องแสงแดด/ความร้อน",
+   "ผิด — เป้าหมายคือลดความร้อน",
+   "ผิด — ไม่ใช่เหตุผลในสไลด์"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมอิฐที่เผาด้วยอุณหภูมิสูงขึ้นจึงแข็งแรงขึ้น?",
+  "choices": [
+   "เพราะความพรุนลดลง เนื้อแน่นขึ้น (สีคล้ำขึ้น)",
+   "เพราะมีสีจางลงและพรุนมากขึ้น",
+   "เพราะน้ำหนักเบาลงมาก",
+   "เพราะมีน้ำเพิ่มขึ้นในเนื้ออิฐ"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — อุณหภูมิเผาเพิ่ม → สีคล้ำ ความพรุนลด ความแข็งแรงเพิ่ม",
+   "ผิด — สลับกัน สีคล้ำขึ้น พรุนลดลง",
+   "ผิด — สไลด์ไม่ได้กล่าวเช่นนั้น",
+   "ผิด — การเผาไล่น้ำออก"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ข้อใดเป็นข้อเสียของการใช้เหล็กเป็นวัสดุโครงสร้าง?",
+  "choices": [
+   "ขาดความยืดหยุ่น",
+   "กำลังตกเมื่อโดนความร้อนสูง และโก่งงอได้ง่าย",
+   "กำลังต่ำ",
+   "ใช้เวลาก่อสร้างนาน"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — ข้อดีคือยืดหยุ่นสูง",
+   "ถูก — ข้อเสีย: แพง บำรุงรักษาสูง กำลังตกเมื่อร้อน โก่งงอง่าย",
+   "ผิด — ข้อดีคือให้กำลังสูง",
+   "ผิด — ข้อดีของเหล็กคือใช้เวลาก่อสร้างน้อย"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมอุปกรณ์บังแดดภายนอกจึงดีกว่าแบบภายใน?",
+  "choices": [
+   "เพราะราคาถูกกว่าเสมอ",
+   "เพราะลดปริมาณความร้อนเข้าสู่ภายในอาคารได้ดีกว่า",
+   "เพราะทำให้ห้องมืดสนิท",
+   "เพราะติดตั้งง่ายกว่า"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — ไม่ใช่เหตุผลในสไลด์",
+   "ถูก — กันความร้อนก่อนเข้าถึงกระจก จึงลดความร้อนเข้าอาคารได้ดีกว่า",
+   "ผิด — เป้าหมายคือกันความร้อน ไม่ใช่ทำให้มืด",
+   "ผิด — ไม่ใช่เหตุผลในสไลด์"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ค่า U-value ของกระจกที่ดีควรเป็นอย่างไร และเพราะอะไร?",
+  "choices": [
+   "สูง เพื่อเก็บความร้อนไว้ในห้อง",
+   "ไม่สำคัญ",
+   "ต่ำ เพื่อลดความร้อนที่ถ่ายเทจากภายนอกเข้าสู่อาคาร",
+   "สูง เพื่อให้แสงผ่านมาก"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — ในเมืองร้อนต้องการลดความร้อนเข้า",
+   "ผิด — เป็น 1 ในคุณสมบัติกระจกที่เหมาะสม",
+   "ถูก — U-value = ค่าการถ่ายเทความร้อนรวม ยิ่งน้อยยิ่งกันความร้อน",
+   "ผิด — แสงผ่านวัดด้วย VT"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมจึงนิยมใช้ WPC (ไม้เทียม) แทนไม้จริงมากขึ้น?",
+  "choices": [
+   "เพราะ WPC เป็นอาหารของปลวก",
+   "เพราะ WPC ต้องขัดทาสีทุกปี",
+   "เพราะ WPC ติดไฟง่ายกว่า",
+   "เพราะ WPC ทนชื้น ไม่บวมน้ำ ป้องกันปลวก ชะลอการลามไฟ และไม่ต้องทาสีใหม่"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ไม้จริงต่างหากที่เป็นอาหารปลวก",
+   "ผิด — WPC ลงทุนครั้งเดียว ไม่ต้องทาสีใหม่",
+   "ผิด — WPC มีคุณสมบัติ Fire Retardant",
+   "ถูก — ตรงกับตารางเปรียบเทียบไม้ธรรมชาติ vs WPC"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ข้อใดไม่ใช่ปรัชญาของ Eco Design?",
+  "choices": [
+   "ใช้พลังงานสูงสุดเพื่อความสะดวกสบาย",
+   "ยังประโยชน์แต่ประหยัด",
+   "เหมาะสมกับภูมิอากาศ",
+   "ใช้ทรัพยากรอย่างพอเพียง"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ขัดกับหลักลดการใช้พลังงานที่ก่อมลภาวะ",
+   "ผิด — เป็นปรัชญาข้อ 5",
+   "ผิด — เป็นปรัชญาข้อ 3",
+   "ผิด — เป็นปรัชญาข้อ 1"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมผนังโปร่งแสง (กระจก) จึงมีผลต่อการใช้พลังงานมาก?",
+  "choices": [
+   "เพราะกระจกเป็นฉนวนที่ดีที่สุด",
+   "เพราะรับและถ่ายเทความร้อนจากแดดได้มากกว่าผนังทึบ 5–10 เท่า",
+   "เพราะกระจกผลิตไฟฟ้าได้",
+   "เพราะกระจกกันแสงได้ทั้งหมด"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — กระจกไม่ใช่ฉนวนที่ดี",
+   "ถูก — สไลด์ระบุว่าผนังโปร่งแสงรับความร้อนมากกว่าผนังทึบ 5–10 เท่า",
+   "ผิด — ไม่ใช่เนื้อหาในสไลด์",
+   "ผิด — กระจกให้แสงผ่าน"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ทำไมผนังทึบภายนอกควรใช้สีโทนอ่อน เช่น ขาว ครีม?",
+  "choices": [
+   "เพราะสีอ่อนราคาถูกกว่า",
+   "เพราะสีอ่อนกันน้ำได้ดีกว่า",
+   "เพราะสีอ่อนทำให้ผนังแข็งแรงขึ้น",
+   "เพราะดูดกลืนรังสีแสงอาทิตย์น้อยกว่าสีโทนเข้ม"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — ไม่ใช่เหตุผลในสไลด์",
+   "ผิด — ไม่ใช่เหตุผลในสไลด์",
+   "ผิด — สีไม่เกี่ยวกับความแข็งแรง",
+   "ถูก — ลดการดูดกลืนรังสี ความร้อนเข้าอาคารน้อยลง"
+  ]
+ },
+ {
+  "type": "understand",
+  "q": "ข้อใดสรุปปัญหาของปูนซีเมนต์แบบดั้งเดิมได้ตรงที่สุด?",
+  "choices": [
+   "การเผาด้วยความร้อนสูงปล่อย CO₂ มหาศาลและสิ้นเปลืองพลังงาน",
+   "ไม่แข็งแรงและไม่ปลอดภัย",
+   "แข็งตัวไม่ได้เมื่อผสมน้ำ",
+   "ราคาแพงเกินไปจนไม่มีใครใช้"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ด้านลบคือการเผาแบบเดิมปล่อย CO₂ มากและใช้พลังงานสูง",
+   "ผิด — ด้านบวกของปูนคือแข็งแรง ปลอดภัย",
+   "ผิด — ปูนแข็งตัวจากไฮเดรชั่น",
+   "ผิด — ไม่ใช่ประเด็นในสไลด์"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "อาคารด้านทิศตะวันตกโดนแดดบ่ายจัด ควรติดตั้งอุปกรณ์บังแดดภายนอกแบบใด?",
+  "choices": [
+   "แนวตั้ง",
+   "ไม่ต้องติดตั้ง",
+   "ติดภายในอาคารเท่านั้น",
+   "แนวนอน"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — ทิศตะวันออก/ตะวันตก แดดเฉียงต่ำ ควรใช้แบบแนวตั้ง",
+   "ผิด — ทิศตะวันตกรับความร้อนมาก ควรมีบังแดด",
+   "ผิด — แบบภายนอกลดความร้อนได้ดีกว่า",
+   "ผิด — แนวนอนเหมาะกับทิศใต้และทิศเหนือ"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ยืนข้างกองไฟแล้วรู้สึกร้อนที่หน้า ทั้งที่ไม่ได้สัมผัสไฟ เป็นการถ่ายเทความร้อนแบบใด?",
+  "choices": [
+   "การนำความร้อน",
+   "การพาความร้อน",
+   "ไฮเดรชั่น",
+   "การแผ่รังสีความร้อน"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — การนำต้องสัมผัสกัน",
+   "ผิด — การพาต้องอาศัยการไหลของอากาศร้อนมาถึงตัว",
+   "ผิด — ไฮเดรชั่นเป็นปฏิกิริยาของปูน",
+   "ถูก — ความร้อนแผ่ออกมาเป็นคลื่น ไม่ต้องสัมผัส"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ต้องการเดินท่อใต้ดินไปยังบ่อเกรอะ ควรเลือกท่อชนิดใด?",
+  "choices": [
+   "ABS",
+   "SR (Styrene-Rubber)",
+   "CPVC",
+   "PVC"
+  ],
+  "correct": 1,
+  "explain": [
+   "ผิด — ABS ใช้ท่อระบายน้ำเสียและท่ออากาศ",
+   "ถูก — SR นิยมใช้ในถังบ่อเกรอะ ท่อระบายน้ำเสีย ท่อโสโครกใต้ดิน",
+   "ผิด — CPVC เหมาะท่อน้ำร้อน/สารเคมี",
+   "ผิด — PVC เหมาะท่อน้ำจ่ายเข้าอาคาร"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "ห้องที่หน้าต่างอยู่ผนังเดียวแล้วอากาศอับ ควรแก้ตามหลักการระบายอากาศอย่างไร?",
+  "choices": [
+   "เพิ่มช่องเปิดให้อากาศเก่าไหลออกและอากาศใหม่เข้ามาแทน โดยจัดตำแหน่ง/ความกว้างให้ลมผ่านห้อง",
+   "ทาสีผนังเป็นสีเข้ม",
+   "ปูพื้นด้วยกระเบื้องยาง",
+   "ปิดหน้าต่างทั้งหมดเพื่อกันความร้อน"
+  ],
+  "correct": 0,
+  "explain": [
+   "ถูก — การระบายอากาศคือเปลี่ยนอากาศเก่าออกให้อากาศใหม่เข้า ตำแหน่งและความกว้างช่องเปิดมีผลต่อกระแสลม",
+   "ผิด — สีเข้มยิ่งดูดความร้อน",
+   "ผิด — ไม่เกี่ยวกับการระบายอากาศ",
+   "ผิด — ยิ่งทำให้อากาศไม่ถ่ายเท"
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "เจ้าของบ้านอยากเปลี่ยนหลอดไฟที่ให้แสง 650 lumen เท่าเดิมแต่ประหยัดไฟที่สุด ควรเลือกหลอดใด?",
+  "choices": [
+   "หลอดไส้ 100W",
+   "หลอด CFL 13W",
+   "หลอด LED 8W",
+   "หลอดไส้ 60W"
+  ],
+  "correct": 2,
+  "explain": [
+   "ผิด — กินไฟยิ่งกว่า",
+   "ผิด — ประหยัด 78% แต่ยังด้อยกว่า LED",
+   "ถูก — LED 8W ประหยัด 86% อายุ 15,000 ชม.",
+   "ผิด — กินไฟมากที่สุด อายุ 1,000 ชม."
+  ]
+ },
+ {
+  "type": "apply",
+  "q": "สร้างระเบียงกลางแจ้งที่โดนแดดฝนตลอด ควรเลือกไม้เทียม WPC รุ่นใด?",
+  "choices": [
+   "Gen 2 WPC + PVC",
+   "Gen 1 WPC + PE",
+   "ไม้จริงที่ไม่ทาสี",
+   "Gen 3/4 Co-Extrusion ที่มีเกราะโพลิเมอร์ HDPE/ASA"
+  ],
+  "correct": 3,
+  "explain": [
+   "ผิด — Gen 2 ทน UV ไม่ดี กรอบแตกเมื่ออยู่กลางแจ้ง",
+   "ผิด — Gen 1 ดูดความชื้น เสื่อมตามสภาพอากาศ",
+   "ผิด — ไม้จริงบวมน้ำ ผุ ปลวกกิน",
+   "ถูก — Co-Extrusion มีเกราะกัน UV กันน้ำ ทนแดดทนฝน อายุ 10–50 ปี"
+  ]
+ }
+];
+
+let current = 0;
+const answered = new Array(questions.length).fill(null); // currently displayed choice per question
+const firstChoices = new Array(questions.length).fill(null); // choice used for scoring (first click only)
+
+function buildJumpGrid() {
+  const grid = document.getElementById('jumpGrid');
+  let html = '';
+  questions.forEach((q, i) => {
+    html += '<button data-i="' + i + '" onclick="jumpTo(' + i + ')">' + (i+1) + '</button>';
+  });
+  grid.innerHTML = html;
+  updateJumpGrid();
+}
+
+function updateJumpGrid() {
+  const grid = document.getElementById('jumpGrid');
+  Array.from(grid.children).forEach((btn, i) => {
+    btn.className = '';
+    if (i === current && current < questions.length) btn.classList.add('current');
+    if (firstChoices[i] !== null) {
+      btn.classList.add(firstChoices[i] === questions[i].correct ? 'done-correct' : 'done-wrong');
+    }
+  });
+}
+
+function jumpTo(i) {
+  current = i;
+  render();
+}
+
+function render() {
+  const area = document.getElementById('quizArea');
+  updateJumpGrid();
+  if (current >= questions.length) {
+    renderScore();
+    return;
+  }
+  const qd = questions[current];
+  const chosen = answered[current];
+
+  let html = '<div class="card">';
+  html += '<div class="progress-row">';
+  html += '<div class="progress">ข้อ ' + (current+1) + ' / ' + questions.length + '</div>';
+  html += '<div class="tag ' + qd.type + '">' + TAG_LABEL[qd.type] + '</div>';
+  html += '</div>';
+  html += '<div class="question">' + qd.q + '</div>';
+
+  qd.choices.forEach((c, i) => {
+    let cls = 'choice';
+    if (chosen !== null) {
+      if (i === qd.correct) cls += ' correct';
+      else if (i === chosen) cls += ' wrong';
+    }
+    html += '<button class="' + cls + '" onclick="selectChoice(' + i + ')">' + String.fromCharCode(3585+i) + '. ' + c + '</button>';
+    if (chosen !== null && i === chosen) {
+      const bgCls = (i === qd.correct) ? 'correct-bg' : 'wrong-bg';
+      html += '<div class="explain ' + bgCls + '">' + qd.explain[i] + '</div>';
+    }
+  });
+
+  html += '<div class="nav">';
+  html += '<button class="nav-btn" onclick="prevQ()" ' + (current===0?'disabled':'') + '>ก่อนหน้า</button>';
+  html += '<button class="nav-btn" onclick="nextQ()">' + (current===questions.length-1 ? 'ดูสรุปคะแนน' : 'ถัดไป') + '</button>';
+  html += '</div>';
+  html += '</div>';
+
+  area.innerHTML = html;
+}
+
+function selectChoice(i) {
+  if (firstChoices[current] === null) {
+    firstChoices[current] = i;
+  }
+  answered[current] = i;
+  render();
+}
+
+function nextQ() {
+  if (current < questions.length - 1) {
+    current++;
+  } else {
+    current = questions.length; // trigger score screen
+  }
+  render();
+}
+
+function prevQ() {
+  if (current > 0) current--;
+  render();
+}
+
+function renderScore() {
+  const score = firstChoices.reduce((acc, val, idx) => {
+    return (val !== null && val === questions[idx].correct) ? acc + 1 : acc;
+  }, 0);
+
+  const byType = { recall: [0,0], understand: [0,0], apply: [0,0] };
+  questions.forEach((qd, idx) => {
+    byType[qd.type][1]++;
+    if (firstChoices[idx] !== null && firstChoices[idx] === qd.correct) byType[qd.type][0]++;
+  });
+
+  const area = document.getElementById('quizArea');
+  let html = '<div class="card score-box">';
+  html += '<div>คุณทำแบบทดสอบเสร็จแล้ว</div>';
+  html += '<div class="big">' + score + ' / ' + questions.length + '</div>';
+  html += '<div class="breakdown">';
+  html += '<div><span>ความจำ</span><span>' + byType.recall[0] + ' / ' + byType.recall[1] + '</span></div>';
+  html += '<div><span>ความเข้าใจ</span><span>' + byType.understand[0] + ' / ' + byType.understand[1] + '</span></div>';
+  html += '<div><span>การนำไปใช้</span><span>' + byType.apply[0] + ' / ' + byType.apply[1] + '</span></div>';
+  html += '</div>';
+  html += '<button id="restartBtn" onclick="restart()">ทำใหม่อีกครั้ง</button>';
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function restart() {
+  current = 0;
+  for (let i = 0; i < questions.length; i++) {
+    answered[i] = null;
+    firstChoices[i] = null;
+  }
+  render();
+}
+
+buildJumpGrid();
+render();
+</script>
+
+</body>
+</html>
