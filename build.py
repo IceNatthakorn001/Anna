@@ -186,6 +186,20 @@ def build():
 
     # extra files published unchanged (e.g. the practice exam PDF), listed above the chapters
     exam_rows = ""
+    # combined quizzes covering every chapter: quiz-รวม*.html -> docs/review-<n>/quiz.html
+    for n, cq in enumerate(sorted(ROOT.glob("quiz-รวม*.html")), 1):
+        qdir = OUT / f"review-{n}"
+        qdir.mkdir(exist_ok=True)
+        q = cq.read_text(encoding="utf-8")
+        bar = QUIZ_BAR.replace('<a href="index.html" style="color:#3f51b5;text-decoration:none;font-weight:600">← กลับไปอ่านสรุป</a>\n<span style="color:#999">|</span>\n', "")
+        q = re.sub(r"(<body[^>]*>)", lambda m: m.group(1) + "\n" + bar, q, count=1)
+        q = q.replace("<head>", '<head>\n<meta name="viewport" content="width=device-width, initial-scale=1">', 1)
+        (qdir / "quiz.html").write_text(q, encoding="utf-8")
+        title = re.search(r"<h1>Quiz: (.*?)</h1>", q).group(1)
+        exam_rows += (f'<li class="lesson-row"><span class="num">🎯</span>'
+                      f'<a class="lesson-link" href="{qdir.name}/quiz.html"><small>แบบทดสอบรวมทุกบท · บทละ 20 ข้อ</small>'
+                      f'<span>{esc(title)}</span></a>'
+                      f'<div class="row-actions"><a class="chip chip-quiz" href="{qdir.name}/quiz.html">📝 ทำแบบทดสอบ</a></div></li>')
     for pdf in sorted(ROOT.glob("*.pdf")):
         shutil.copy2(pdf, OUT / pdf.name)
         href = quote(pdf.name)
@@ -209,7 +223,7 @@ def build():
                       f'<div class="row-actions">'
                       + (f'<a class="chip chip-quiz" href="{qhref}">📝 ทำข้อสอบ</a>' if qhref else "")
                       + f'<a class="chip" href="{href}" target="_blank">📄 PDF</a></div></li>')
-    exam_block = (f'<h2 style="margin:24px 0 8px">🎯 ข้อสอบฝึก</h2><ol class="lesson-list">{exam_rows}</ol>'
+    exam_block = (f'<h2 style="margin:24px 0 8px">🎯 แบบทดสอบรวม</h2><ol class="lesson-list">{exam_rows}</ol>'
                   f'<h2 style="margin:24px 0 8px">📖 สรุปรายบท</h2>' if exam_rows else "")
 
     nq = sum(1 for l in lessons if l["quiz"])
