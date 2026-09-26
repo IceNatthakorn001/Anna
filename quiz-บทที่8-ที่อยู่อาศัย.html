@@ -697,7 +697,7 @@ function render() {
       if (i === qd.correct) cls += ' correct';
       else if (i === chosen) cls += ' wrong';
     }
-    html += '<button class="' + cls + '" onclick="selectChoice(' + i + ')">' + String.fromCharCode(3585+i) + '. ' + c + '</button>';
+    html += '<button class="' + cls + '" onclick="selectChoice(' + i + ')">' + 'กขคง'[i] + '. ' + c + '</button>';
     if (chosen !== null && i === chosen) {
       const bgCls = (i === qd.correct) ? 'correct-bg' : 'wrong-bg';
       html += '<div class="explain ' + bgCls + '">' + qd.explain[i] + '</div>';
